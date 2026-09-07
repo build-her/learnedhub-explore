@@ -1,69 +1,92 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+type SearchParams = Promise<{
+  school?: string | string[];
+  name?: string | string[];
+}>;
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const schoolCode = firstValue(params.school);
+  const schoolName = firstValue(params.name);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex flex-1 flex-col items-center px-lg py-xxl">
+      <div className="flex w-full max-w-md flex-col gap-xl">
+        {schoolCode && (
+          <div className="flex flex-col gap-xs rounded-md bg-surface-tint px-md py-sm">
+            <span className="type-caption text-muted">Shared by your school</span>
+            <span className="type-body text-main">
+              {schoolName ? schoolName : `School code: ${schoolCode}`}
+              {schoolName && schoolCode ? ` · ${schoolCode}` : null}
+            </span>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-sm">
+          <h1 className="type-display-lg text-main">Figure out your path.</h1>
+          <p className="type-body text-muted">
+            No pressure — just real answers about streams, courses, and
+            skills, in one sitting.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="flex flex-col gap-md">
+          <h2 className="type-h2 text-main">What you&apos;ll do today</h2>
+
+          <ul className="flex flex-col gap-sm">
+            <li className="flex items-start gap-sm rounded-md bg-surface-tint p-md">
+              <span className="type-h2 text-discover">1</span>
+              <div className="flex flex-col">
+                <span className="type-body text-main">
+                  <strong>Discover</strong> — find your stream
+                </span>
+                <span className="type-caption text-muted">~10 minutes</span>
+              </div>
+            </li>
+
+            <li className="flex items-start gap-sm rounded-md bg-surface-tint p-md">
+              <span className="type-h2 text-explore">2</span>
+              <div className="flex flex-col">
+                <span className="type-body text-main">
+                  <strong>Explore</strong> — see which courses actually fit
+                </span>
+              </div>
+            </li>
+
+            <li className="flex items-start gap-sm rounded-md bg-surface-tint p-md">
+              <span className="type-h2 text-build">3</span>
+              <div className="flex flex-col">
+                <span className="type-body text-main">
+                  <strong>Build</strong> — try a real skill challenge
+                </span>
+                <span className="type-caption text-muted">30 minutes</span>
+              </div>
+            </li>
+          </ul>
         </div>
-      </main>
-    </div>
+
+        <div className="flex flex-col items-center justify-center gap-xs rounded-md border border-dashed border-[var(--text-muted)] p-xl">
+          <span className="type-caption text-muted">
+            [ Sample-artifact teaser placeholder — content pending ]
+          </span>
+        </div>
+
+        <Link
+          href="/discover"
+          className="type-body text-surface-base rounded-md bg-brand-primary px-lg py-sm text-center"
+        >
+          Start with Discover
+        </Link>
+      </div>
+    </main>
   );
 }
