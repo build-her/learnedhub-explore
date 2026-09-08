@@ -1,17 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #183d64;
-  --color-discover: #183d64;
-  --color-explore: #45787c;
-  --color-build: #d5b288;
-  --color-dossier: #000000;
+  --color-brand-primary: #15573e;
+  --color-discover: #15573e;
+  --color-explore: #1e3a8a;
+  --color-build: #6d28d9;
+  --color-dossier: #1a1a1a;
 
-  --color-surface-tint: #fafdfc;
+  --color-discover-tint: #f0f7f4;
+  --color-discover-border: #c8e6da;
+  --color-explore-tint: #eef2ff;
+  --color-explore-border: #bfdbfe;
+  --color-build-tint: #f5f3ff;
+  --color-build-border: #ddd6fe;
+
+  --color-line: #e5e1db;
+
+  --color-surface-tint: #f8f7f4;
   --color-surface-base: #ffffff;
-
-  --color-text-main: #1a1a1a;
-  --color-text-muted: #626262;
 
   --font-serif: Georgia, "Times New Roman", Times, serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -27,6 +33,13 @@
   --text-caption: 12px;
   --leading-caption: 16px;
 
+  /* WARNING: Tailwind's max-w-*, w-*, h-*, min-w-*, min-h-* size-keyword
+     utilities (max-w-xs, w-md, etc.) resolve through this SAME
+     --spacing-* variable in this Tailwind version. max-w-xs silently
+     becomes max-width: 4px (our xs), not Tailwind's intended 320px — no
+     error, just a broken layout. Confirmed by inspecting compiled CSS.
+     RULE: never use bare max-w-{xs,sm,md,lg,xl,xxl} / w-{...} / h-{...}
+     anywhere. Use an explicit pixel value instead: max-w-[320px]. */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -38,6 +51,21 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+:root {
+  --text-main: #1a1a1a;
+  --text-muted: #626262;
+}
+
+@layer utilities {
+  .text-main {
+    color: var(--text-main);
+  }
+  .text-muted {
+    color: var(--text-muted);
+  }
 }
 
 @layer components {
@@ -79,5 +107,5 @@
 
 body {
   background-color: var(--color-surface-base);
-  color: var(--color-text-main);
+  color: var(--text-main);
 }
