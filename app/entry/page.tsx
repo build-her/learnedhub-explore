@@ -3,10 +3,24 @@ import Link from "next/link";
 type SearchParams = Promise<{
   school?: string | string[];
   name?: string | string[];
+  next?: string | string[];
 }>;
 
 function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+type PathwayKey = "discover" | "explore" | "build";
+
+const PATHWAY_CTA: Record<PathwayKey, { href: string; label: string; bgClass: string }> = {
+  discover: { href: "/discover", label: "Start with Discover", bgClass: "bg-discover" },
+  explore: { href: "/explore", label: "Start with Explore", bgClass: "bg-explore" },
+  build: { href: "/build", label: "Start with Build", bgClass: "bg-build" },
+};
+
+function resolvePathway(value: string | undefined): PathwayKey {
+  if (value === "discover" || value === "explore" || value === "build") return value;
+  return "discover";
 }
 
 export default async function Home({
@@ -17,6 +31,8 @@ export default async function Home({
   const params = await searchParams;
   const schoolCode = firstValue(params.school);
   const schoolName = firstValue(params.name);
+  const pathway = resolvePathway(firstValue(params.next));
+  const cta = PATHWAY_CTA[pathway];
 
   return (
     <main className="flex flex-1 flex-col items-center px-lg py-xxl">
@@ -81,10 +97,10 @@ export default async function Home({
         </div>
 
         <Link
-          href="/discover"
-          className="type-body text-surface-base rounded-md bg-brand-primary px-lg py-sm text-center"
+          href={cta.href}
+          className={`type-body text-surface-base rounded-md px-lg py-sm text-center ${cta.bgClass}`}
         >
-          Start with Discover
+          {cta.label}
         </Link>
       </div>
     </main>
