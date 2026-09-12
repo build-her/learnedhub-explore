@@ -108,7 +108,13 @@ export default async function CourseProfilePage({
               </div>
             )}
           </>
-        )}
+                )}
+        <Link
+          href={`/explore/${course.id}/defend`}
+          className="block w-full text-center py-sm rounded-md type-body font-bold text-surface-base bg-explore"
+        >
+          Build your case for this course →
+        </Link>
       </div>
     </main>
   );
