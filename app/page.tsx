@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { COURSES } from "@/lib/courses";
 
 type PathwayKey = "discover" | "explore" | "build";
 
@@ -66,6 +67,7 @@ const pathwayBg: Record<PathwayKey, string> = {
 export default function Home() {
   const [activeIdx, setActiveIdx] = useState(0);
   const active = PATHWAYS[activeIdx];
+  const previewCourses = COURSES.slice(0, 2);
 
   return (
     <div className="flex flex-col bg-surface-tint min-h-full">
@@ -145,10 +147,51 @@ export default function Home() {
               <div className="type-caption text-muted mt-xs">{active.tagline}</div>
             </div>
 
-            <div className="mx-md mb-sm rounded-md p-md bg-surface-base/70 border border-line min-h-[120px] flex items-center">
-              <p className="type-caption text-muted italic">
-                [ Live preview of {active.label} pending real content ]
-              </p>
+            <div className="mx-md mb-sm rounded-md p-md bg-surface-base/70 border border-line min-h-[120px] flex flex-col justify-center gap-xs">
+              {active.key === "discover" && (
+                <>
+                  <span className="type-caption text-muted uppercase tracking-wider">
+                    Sample question
+                  </span>
+                  <p className="type-body text-main font-medium">
+                    &quot;Which of these sounds most like something you&apos;d
+                    enjoy?&quot;
+                  </p>
+                  <div className="flex flex-wrap gap-xs mt-xs">
+                    <span className="type-caption bg-discover-tint text-discover border border-discover-border rounded-full px-sm py-xs">
+                      Fixing something broken
+                    </span>
+                    <span className="type-caption bg-discover-tint text-discover border border-discover-border rounded-full px-sm py-xs">
+                      Explaining an idea well
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {active.key === "explore" && (
+                <>
+                  <span className="type-caption text-muted uppercase tracking-wider">
+                    From the course list
+                  </span>
+                  {previewCourses.map((course) => (
+                    <div key={course.id} className="flex flex-col">
+                      <span className="type-body text-main font-medium">
+                        {course.name}
+                      </span>
+                      <span className="type-caption text-muted">
+                        {course.faculty}
+                      </span>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {active.key === "build" && (
+                <p className="type-caption text-muted italic">
+                  Build challenges are launching soon — real skill
+                  challenges, not previews.
+                </p>
+              )}
             </div>
 
             <div className="px-md pb-md">
