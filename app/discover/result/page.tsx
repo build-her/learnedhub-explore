@@ -60,13 +60,32 @@ function ResultContent() {
               : "border-discover-border bg-discover-tint"
           }`}
         >
-          {content.isPlaceholder && (
+                    {content.isPlaceholder && (
             <span className="type-caption text-muted italic block mb-sm">
               Placeholder content — pending real authoring
             </span>
           )}
           <h2 className="type-h2 text-main mb-sm">{content.headline}</h2>
-          <p className="type-body text-main mb-sm">{content.body}</p>
+
+          {content.roles ? (
+            <div className="flex flex-col gap-sm mb-sm">
+              {content.roles.map((role) => (
+                <div key={role.title}>
+                  <p className="type-body text-main font-semibold mb-xs">{role.title}</p>
+                  <p className="type-body text-main">{role.description}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-sm mb-sm">
+              {content.paragraphs.map((paragraph, idx) => (
+                <p key={idx} className="type-body text-main">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          )}
+
           <span className="type-caption text-muted">{content.format}</span>
         </div>
 
