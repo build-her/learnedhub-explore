@@ -1,0 +1,26 @@
+[
+  {
+    "code": "9ZKPRC",
+    "school_name": "King's College",
+    "facilitator_name": "Mr. Ade",
+    "notes": null,
+    "created_at": "2026-09-22T20:20:26.848Z",
+    "is_active": true
+  },
+  {
+    "code": "38M77W",
+    "school_name": "King's College",
+    "facilitator_name": "Mr. Ade",
+    "notes": null,
+    "created_at": "2026-09-22T20:20:26.848Z",
+    "is_active": true
+  },
+  {
+    "code": "GTR783",
+    "school_name": "King's College",
+    "facilitator_name": "Mr. Ade",
+    "notes": null,
+    "created_at": "2026-09-22T20:20:26.848Z",
+    "is_active": true
+  }
+]

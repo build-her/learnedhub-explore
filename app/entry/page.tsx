@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SchoolCodeEntry from "@/components/SchoolCodeEntry";
 
 type SearchParams = Promise<{
   school?: string | string[];
@@ -91,15 +92,10 @@ export default async function Home({
   return (
     <main className="flex flex-1 flex-col items-center px-lg py-xxl">
       <div className="flex w-full max-w-[448px] flex-col gap-xl">
-        {schoolCode && (
-          <div className="flex flex-col gap-xs rounded-md bg-surface-tint px-md py-sm">
-            <span className="type-caption text-muted">Shared by your school</span>
-            <span className="type-body text-main">
-              {schoolName ? schoolName : `School code: ${schoolCode}`}
-              {schoolName && schoolCode ? ` · ${schoolCode}` : null}
-            </span>
-          </div>
-        )}
+        <SchoolCodeEntry
+          initialSchoolCode={schoolCode}
+          initialSchoolName={schoolName}
+        />
 
         <div className="flex flex-col gap-sm">
           <h1 className="type-display-lg text-main">{info.headline}</h1>

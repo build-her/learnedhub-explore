@@ -1,5 +1,6 @@
 import { toCanvas } from "html-to-image";
 import { jsPDF } from "jspdf";
+import { getShareableUrl } from "@/lib/session";
 
 /**
  * Shared export/share utilities — reused across every artifact screen.
@@ -54,20 +55,21 @@ export async function exportNodeAsPdf(
   pdf.save(`${filename}.pdf`);
 }
 
-/** Copy the current page URL to the clipboard. Returns whether it succeeded. */
-export async function copyCurrentLink(): Promise<boolean> {
+/** Copy the current page URL (with embedded session query param) to the clipboard. Returns whether it succeeded. */
+export async function copyCurrentLink(url?: string): Promise<boolean> {
   try {
-    await navigator.clipboard.writeText(window.location.href);
+    const shareUrl = getShareableUrl(url);
+    await navigator.clipboard.writeText(shareUrl);
     return true;
   } catch {
     return false;
   }
 }
 
-/** Open a WhatsApp share of the current page URL, with an optional message prefix. */
-export function shareToWhatsApp(message?: string): void {
-  const url = window.location.href;
-  const text = message ? `${message} ${url}` : url;
+/** Open a WhatsApp share of the current page URL (with embedded session query param), with an optional message prefix. */
+export function shareToWhatsApp(message?: string, url?: string): void {
+  const shareUrl = getShareableUrl(url);
+  const text = message ? `${message} ${shareUrl}` : shareUrl;
   window.open(
     `https://wa.me/?text=${encodeURIComponent(text)}`,
     "_blank",
