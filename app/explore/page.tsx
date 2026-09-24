@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { type CourseStream, type Course } from "@/lib/courses";
 import { supabase } from "@/lib/supabase";
+import { logEvent } from "@/lib/events";
 
 function isCourseStream(value: string | null): value is CourseStream {
   return value === "science" || value === "arts" || value === "commercial" || value === "technical";
@@ -65,6 +66,19 @@ function ExploreContent() {
   const [query, setQuery] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoggedSearchRef = useRef(false);
+
+  function triggerPathwayStarted(searchTerm?: string) {
+    if (!hasLoggedSearchRef.current) {
+      hasLoggedSearchRef.current = true;
+      logEvent({
+        event_type: "pathway_started",
+        pathway: "explore",
+        screen: "explore_pathway_list",
+        metadata_json: { query: searchTerm || undefined },
+      });
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -155,7 +169,12 @@ function ExploreContent() {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (e.target.value.trim().length > 0) {
+              triggerPathwayStarted(e.target.value.trim());
+            }
+          }}
           placeholder="Search course name..."
           className="type-body px-md py-sm rounded-lg border border-explore-border bg-surface-base text-main"
         />

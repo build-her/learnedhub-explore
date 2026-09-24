@@ -1,5 +1,4 @@
-import Link from "next/link";
-import SchoolCodeEntry from "@/components/SchoolCodeEntry";
+import LearnerEntryFlow from "@/components/LearnerEntryFlow";
 
 type SearchParams = Promise<{
   school?: string | string[];
@@ -92,15 +91,19 @@ export default async function Home({
   return (
     <main className="flex flex-1 flex-col items-center px-lg py-xxl">
       <div className="flex w-full max-w-[448px] flex-col gap-xl">
-        <SchoolCodeEntry
-          initialSchoolCode={schoolCode}
-          initialSchoolName={schoolName}
-        />
-
         <div className="flex flex-col gap-sm">
           <h1 className="type-display-lg text-main">{info.headline}</h1>
           <p className="type-body text-muted">{info.subtext}</p>
         </div>
+
+        <LearnerEntryFlow
+          initialAccessCode={schoolCode}
+          initialName={schoolName}
+          destinationHref={cta.href}
+          destinationLabel={cta.label}
+          bgClass={cta.bgClass}
+          pathwayKey={pathway}
+        />
 
         <div className="flex flex-col gap-md">
           <h2 className="type-h2 text-main">Today</h2>
@@ -150,13 +153,6 @@ export default async function Home({
             </span>
           </div>
         )}
-
-        <Link
-          href={cta.href}
-          className={`type-body text-surface-base rounded-md px-lg py-sm text-center ${cta.bgClass}`}
-        >
-          {cta.label}
-        </Link>
       </div>
     </main>
   );

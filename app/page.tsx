@@ -73,12 +73,20 @@ export default function Home() {
     <div className="flex flex-col bg-surface-tint min-h-full">
       <div className="flex items-center justify-between px-md py-sm bg-surface-tint border-b border-line sticky top-0 z-20">
         <span className="type-h2 text-discover">LearnedHub</span>
-        <Link
-          href="/entry"
-          className="type-caption bg-discover text-surface-base px-md py-xs rounded-full font-semibold"
-        >
-          Get started
-        </Link>
+        <div className="flex items-center gap-sm">
+          <Link
+            href="/dossier"
+            className="type-caption text-main font-semibold hover:text-discover"
+          >
+            Dossier
+          </Link>
+          <Link
+            href="/entry"
+            className="type-caption bg-discover text-surface-base px-md py-xs rounded-full font-semibold"
+          >
+            Get started
+          </Link>
+        </div>
       </div>
 
       <div className="bg-discover px-lg pt-xl pb-lg text-surface-base">
@@ -323,19 +331,30 @@ export default function Home() {
         <div className="type-h2 text-surface-base/90 mb-md">LearnedHub</div>
         <div className="flex flex-wrap gap-x-md gap-y-xs mb-md">
           {[
-            "Discover",
-            "Explore",
-            "Build",
-            "Schools",
-            "Parents",
-            "Partners",
-            "About",
-            "Contact",
-          ].map((label) => (
-            <span key={label} className="type-caption text-surface-base/60">
-              {label}
-            </span>
-          ))}
+            { label: "Discover", href: "/discover" },
+            { label: "Explore", href: "/explore" },
+            { label: "Dossier", href: "/dossier" },
+            { label: "Build", href: "/entry?next=build" },
+            { label: "Schools" },
+            { label: "Parents" },
+            { label: "Partners" },
+            { label: "About" },
+            { label: "Contact" },
+          ].map((item) =>
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="type-caption text-surface-base/80 hover:text-surface-base transition-colors"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span key={item.label} className="type-caption text-surface-base/60">
+                {item.label}
+              </span>
+            )
+          )}
         </div>
         <div className="type-caption text-surface-base/40">
           © 2026 LearnedHub

@@ -7,6 +7,7 @@ import {
   copyCurrentLink,
   shareToWhatsApp,
 } from "@/lib/export";
+import { logEvent, type PathwayName } from "@/lib/events";
 
 type AccentColor = "discover" | "explore" | "build" | "dossier" | "brand-primary";
 
@@ -23,6 +24,9 @@ type ShareExportBarProps = {
   filename?: string;
   shareMessage?: string;
   accent?: AccentColor;
+  screen?: string;
+  shareId?: string;
+  shareUrl?: string;
 };
 
 export default function ShareExportBar({
@@ -30,6 +34,9 @@ export default function ShareExportBar({
   filename = "learned-hub-export",
   shareMessage,
   accent = "brand-primary",
+  screen,
+  shareId,
+  shareUrl,
 }: ShareExportBarProps) {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -39,6 +46,20 @@ export default function ShareExportBar({
     if (!node) throw new Error("Nothing to export yet.");
     return node;
   }
+
+  const pathway: PathwayName =
+    accent === "explore" ? "explore" : accent === "build" ? "build" : "discover";
+
+  const resolvedScreen =
+    screen ||
+    (accent === "explore"
+      ? "explore_defend"
+      : accent === "dossier"
+      ? "dossier"
+      : "discover_result");
+
+  const effectiveShareUrl =
+    shareUrl || (shareId ? `/dossier/share/${shareId}` : undefined);
 
   async function handle(action: () => Promise<void> | void, successLabel: string) {
     setBusy(true);
@@ -62,7 +83,22 @@ export default function ShareExportBar({
         <button
           type="button"
           disabled={busy}
-          onClick={() => handle(() => exportNodeAsPdf(requireNode(), filename), "PDF downloaded")}
+          onClick={() =>
+            handle(async () => {
+              await exportNodeAsPdf(requireNode(), filename);
+              logEvent({
+                event_type: "artifact_shared",
+                pathway,
+                screen: resolvedScreen,
+                metadata_json: {
+                  share_type: "pdf",
+                  filename,
+                  share_id: shareId,
+                  share_url: effectiveShareUrl,
+                },
+              });
+            }, "PDF downloaded")
+          }
           className={buttonClass}
         >
           Download PDF
@@ -71,7 +107,22 @@ export default function ShareExportBar({
         <button
           type="button"
           disabled={busy}
-          onClick={() => handle(() => exportNodeAsImage(requireNode(), filename), "Image downloaded")}
+          onClick={() =>
+            handle(async () => {
+              await exportNodeAsImage(requireNode(), filename);
+              logEvent({
+                event_type: "artifact_shared",
+                pathway,
+                screen: resolvedScreen,
+                metadata_json: {
+                  share_type: "image",
+                  filename,
+                  share_id: shareId,
+                  share_url: effectiveShareUrl,
+                },
+              });
+            }, "Image downloaded")
+          }
           className={buttonClass}
         >
           Download image
@@ -82,8 +133,19 @@ export default function ShareExportBar({
           disabled={busy}
           onClick={() =>
             handle(async () => {
-              const ok = await copyCurrentLink();
+              const ok = await copyCurrentLink(effectiveShareUrl);
               if (!ok) throw new Error("copy failed");
+              logEvent({
+                event_type: "artifact_shared",
+                pathway,
+                screen: resolvedScreen,
+                metadata_json: {
+                  share_type: "copy_link",
+                  filename,
+                  share_id: shareId,
+                  share_url: effectiveShareUrl,
+                },
+              });
             }, "Link copied")
           }
           className={buttonClass}
@@ -94,7 +156,22 @@ export default function ShareExportBar({
         <button
           type="button"
           disabled={busy}
-          onClick={() => handle(() => shareToWhatsApp(shareMessage), "Opening WhatsApp")}
+          onClick={() =>
+            handle(() => {
+              shareToWhatsApp(shareMessage, effectiveShareUrl);
+              logEvent({
+                event_type: "artifact_shared",
+                pathway,
+                screen: resolvedScreen,
+                metadata_json: {
+                  share_type: "whatsapp",
+                  filename,
+                  share_id: shareId,
+                  share_url: effectiveShareUrl,
+                },
+              });
+            }, "Opening WhatsApp")
+          }
           className={buttonClass}
         >
           Share to WhatsApp
