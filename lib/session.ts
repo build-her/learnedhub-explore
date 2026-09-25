@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { createLearner } from "@/lib/learners";
 
 export const SESSION_STORAGE_KEY = "learnedhub_session_token";
 export const SESSION_QUERY_PARAM = "session";
@@ -133,18 +132,72 @@ export async function resetSession(): Promise<string> {
 }
 
 export const LEARNER_STORAGE_KEY = "learnedhub_learner_id";
+export const LEARNER_COOKIE_NAME = "learnedhub_learner_id";
 
 /**
- * Clears the current session's learner_id link in Supabase and localStorage,
+ * Sets the authoritative learner_id cookie for both client and server (proxy middleware).
+ */
+export function setLearnerCookie(learnerId: string) {
+  if (typeof document === "undefined") return;
+  try {
+    document.cookie = `${LEARNER_COOKIE_NAME}=${encodeURIComponent(learnerId)}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch (err) {
+    console.error("Failed to set learner cookie:", err);
+  }
+}
+
+/**
+ * Clears the learner_id cookie.
+ */
+export function clearLearnerCookie() {
+  if (typeof document === "undefined") return;
+  try {
+    document.cookie = `${LEARNER_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+  } catch (err) {
+    console.error("Failed to clear learner cookie:", err);
+  }
+}
+
+/**
+ * Reads the learner_id from document.cookie if available.
+ * Returns the trimmed learner_id, or null if missing/empty/invalid.
+ * This is the authoritative read for learner identity.
+ */
+export function getLearnerCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)learnedhub_learner_id=([^;]+)/);
+    if (!match) return null;
+    const value = decodeURIComponent(match[1]).trim();
+    if (!value || value === "undefined" || value === "null") {
+      return null;
+    }
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clears the current session's learner_id link in cookies, non-authoritative localStorage cache, and Supabase,
  * allowing the current device/session to attach to a different or new learner.
  */
 export async function clearSessionLearner(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
-    localStorage.removeItem(LEARNER_STORAGE_KEY);
-    localStorage.removeItem("learnedhub_learner_name");
-    localStorage.removeItem("learnedhub_learner_code");
+    // 1. Authoritative clear: clear cookie
+    clearLearnerCookie();
 
+    // 2. Clear non-authoritative cache in localStorage
+    try {
+      localStorage.removeItem(LEARNER_STORAGE_KEY);
+      localStorage.removeItem("learnedhub_learner_name");
+      localStorage.removeItem("learnedhub_learner_code");
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    // 3. Clear learner_id in sessions table
     const token = getSessionToken();
     if (!token) return true;
 
@@ -165,7 +218,9 @@ export async function clearSessionLearner(): Promise<boolean> {
 }
 
 /**
- * Links a learner_id (UUID from learners table) to the current session in Supabase.
+ * Links a learner_id (UUID from learners table) to the current session.
+ * The cookie is the authoritative single source of truth for learner identity.
+ * localStorage is only updated as a non-authoritative cache (never read to set/override the cookie).
  */
 export async function updateSessionLearner(
   learnerId: string,
@@ -173,15 +228,25 @@ export async function updateSessionLearner(
 ): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
-    localStorage.setItem(LEARNER_STORAGE_KEY, learnerId);
-    if (meta?.name) {
-      localStorage.setItem("learnedhub_learner_name", meta.name);
+    // 1. Authoritative write: set cookie
+    setLearnerCookie(learnerId);
+
+    // 2. Non-authoritative local cache for fast UI access (never read to set or override the cookie)
+    try {
+      localStorage.setItem(LEARNER_STORAGE_KEY, learnerId);
+      if (meta?.name) {
+        localStorage.setItem("learnedhub_learner_name", meta.name);
+      }
+      if (meta?.code) {
+        localStorage.setItem("learnedhub_learner_code", meta.code);
+      }
+    } catch {
+      // Ignore localStorage errors
     }
-    if (meta?.code) {
-      localStorage.setItem("learnedhub_learner_code", meta.code);
-    }
+
+    // 3. Sync to Supabase sessions table
     const token = getOrCreateSessionToken();
-    if (!token) return false;
+    if (!token) return true;
 
     const { error } = await supabase
       .from("sessions")
@@ -201,73 +266,13 @@ export async function updateSessionLearner(
 
 /**
  * Retrieves the learner_id associated with the current session.
+ * The cookie is the single source of truth.
+ * All reads go through the cookie only. localStorage is never read to override or set the cookie.
  */
 export async function getSessionLearnerId(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  try {
-    const cached = localStorage.getItem(LEARNER_STORAGE_KEY);
-    if (cached) return cached;
-
-    const token = getSessionToken();
-    if (!token) return null;
-
-    const { data } = await supabase
-      .from("sessions")
-      .select("learner_id")
-      .eq("token", token)
-      .maybeSingle();
-
-    if (data?.learner_id) {
-      localStorage.setItem(LEARNER_STORAGE_KEY, data.learner_id);
-      return data.learner_id;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  return getLearnerCookie();
 }
 
-/**
- * Ensures the current browser has a valid session and returns the viewer's learner_id.
- * - If the viewer already has a learner_id (existing), returns it without modifying their profile.
- * - If not, generates a new session and creates a new learner record (new), and returns it.
- * Guarantees that the viewer never inherits or uses a shared link author's learner_id.
- */
-export async function getOrCreateViewerLearner(
-  pathway?: string
-): Promise<{ id: string; isNew: boolean }> {
-  if (typeof window === "undefined") return { id: "", isNew: false };
-
-  try {
-    // 1. Check if viewer already has a learner_id stored
-    const existingLearnerId = await getSessionLearnerId();
-    if (existingLearnerId) {
-      return { id: existingLearnerId, isNew: false };
-    }
-
-    // 2. Ensure viewer has an initialized session
-    await initSession();
-
-    // 3. Create a fresh learner record specifically for this viewer
-    const newLearner = await createLearner({
-      preferred_name: "Learner",
-      acquisition_source: "Shared Link",
-      entry_point: pathway || "shared_link",
-    });
-
-    if (newLearner) {
-      await updateSessionLearner(newLearner.id, {
-        name: newLearner.preferred_name,
-        code: newLearner.learner_code,
-      });
-      return { id: newLearner.id, isNew: true };
-    }
-  } catch (err) {
-    console.error("Error ensuring viewer learner:", err);
-  }
-
-  return { id: "", isNew: false };
-}
 
 /**
  * Links a school_code to the current session in Supabase (if school_code column exists).

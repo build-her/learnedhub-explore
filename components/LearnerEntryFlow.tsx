@@ -74,6 +74,9 @@ export default function LearnerEntryFlow({
           const learner = await getLearnerById(learnerId);
           if (learner) {
             setActiveLearner(learner);
+          } else {
+            await clearSessionLearner();
+            setActiveLearner(null);
           }
         }
       } catch (err) {

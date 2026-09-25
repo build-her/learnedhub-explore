@@ -121,7 +121,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
               Go to LearnedHub Home
             </Link>
             <Link
-              href="/entry?next=discover"
+              href="/discover"
               className="type-caption text-muted hover:text-main py-xs"
             >
               Start your own journey →
@@ -240,8 +240,8 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
 
           <LearnerEntryFlow
             ignoreActiveLearner={true}
-            destinationHref={isPlan ? "/discover" : "/explore"}
-            destinationLabel={isPlan ? "Continue to Discover" : "Continue to Explore"}
+            destinationHref={isPlan ? "/discover/quiz" : "/explore/courses"}
+            destinationLabel={isPlan ? "Start Discover Quiz" : "Explore Degree Programs"}
             pathwayKey={isPlan ? "discover" : "explore"}
             bgClass={isPlan ? "bg-discover" : "bg-explore"}
             onLearnerCreated={async (newLearner) => {

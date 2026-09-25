@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { getSessionLearnerId, updateSessionLearner } from "@/lib/session";
-import { createLearner } from "@/lib/learners";
+import { getSessionLearnerId } from "@/lib/session";
 
 export type DiscoverResult = {
   stream: string;
@@ -102,23 +101,6 @@ export async function recordDiscoverAttempt(params: {
 
     if (!learnerId) {
       learnerId = await getSessionLearnerId();
-    }
-
-    // If no learner profile is attached to this session yet, create one
-    if (!learnerId) {
-      const newLearner = await createLearner({
-        preferred_name: "Learner",
-        acquisition_source: "Direct",
-        entry_point: "discover",
-      });
-
-      if (newLearner) {
-        learnerId = newLearner.id;
-        await updateSessionLearner(newLearner.id, {
-          name: newLearner.preferred_name,
-          code: newLearner.learner_code,
-        });
-      }
     }
 
     if (!learnerId) {

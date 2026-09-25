@@ -4,10 +4,9 @@ import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   initSession,
+  getLearnerCookie,
   SESSION_STORAGE_KEY,
-  updateSessionLearner,
 } from "@/lib/session";
-import { createLearner } from "@/lib/learners";
 import { logEvent, resolveScreenAndPathway } from "@/lib/events";
 import { supabase } from "@/lib/supabase";
 
@@ -29,6 +28,9 @@ export default function SessionTracker() {
   const sessionInitialized = useRef(false);
 
   // 1. Session initialization & Shared Link Detection
+  // NOTE: Device/session tracking does NOT create or imply a learner_id.
+  // A learner_id is only created when the user explicitly completes the entry screen.
+  // The learnedhub_learner_id cookie is the single source of truth for learner identity.
   useEffect(() => {
     if (sessionInitialized.current) return;
     sessionInitialized.current = true;
@@ -61,63 +63,34 @@ export default function SessionTracker() {
             return;
           }
 
-          // 3. For other routes, ensure event is tied to viewer's learner_id (existing or new)
-          let viewerLearnerId = localStorage.getItem("learnedhub_learner_id");
-          let isNew = false;
-
-          if (!viewerLearnerId) {
-            const newLearner = await createLearner({
-              preferred_name: "Learner",
-              acquisition_source: "Shared Link",
-              entry_point: pathway || "shared_link",
-            });
-
-            if (newLearner) {
-              viewerLearnerId = newLearner.id;
-              isNew = true;
-              await updateSessionLearner(newLearner.id, {
-                name: newLearner.preferred_name,
-                code: newLearner.learner_code,
-              });
-
-              // Log session_started for this new learner
-              await logEvent({
-                event_type: "session_started",
-                learner_id: newLearner.id,
-                pathway,
-                screen,
-                metadata_json: { source: "shared_link" },
-              });
-            }
-          }
-
-          if (viewerLearnerId) {
-            // Log artifact_opened_via_share carrying the VIEWER's learner_id (new/existing)
-            await logEvent({
-              event_type: "artifact_opened_via_share",
-              learner_id: viewerLearnerId,
-              pathway,
-              screen,
-              metadata_json: {
-                shared_from_session: urlSession,
-                share_id: searchParams.get("share_id") || undefined,
-                is_new_viewer: isNew,
-              },
-            });
-          }
+          // 3. For other routes, log artifact_opened_via_share without auto-creating a learner
+          const viewerLearnerId = getLearnerCookie();
+          await logEvent({
+            event_type: "artifact_opened_via_share",
+            learner_id: viewerLearnerId || null,
+            pathway,
+            screen,
+            metadata_json: {
+              shared_from_session: urlSession,
+              share_id: searchParams.get("share_id") || undefined,
+              is_new_viewer: !viewerLearnerId,
+            },
+          });
           return;
         } catch (err) {
           console.error("Error processing shared link open:", err);
         }
       }
 
-      // Scenario B: Normal session startup
+      // Scenario B: Normal session startup (device tracking only, learner_id remains null until explicit entry)
       const isNewSession = !existingStoredToken;
       await initSession();
 
       if (isNewSession) {
+        const currentLearnerId = getLearnerCookie();
         await logEvent({
           event_type: "session_started",
+          learner_id: currentLearnerId || null,
           pathway,
           screen,
           metadata_json: { source: "direct" },
@@ -131,9 +104,9 @@ export default function SessionTracker() {
   // 2. Screen Transition Tracking: screen_viewed
   // "screen_viewed (every screen transition, tagged with pathway + screen name)"
   useEffect(() => {
-    // Note: When path is /discover, app/discover/page.tsx records each distinct
+    // Note: When path is /discover or /discover/quiz, the quiz component records each distinct
     // question screen step (discover_question_1, discover_question_2, etc.) as the user advances
-    if (pathname === "/discover") return;
+    if (pathname === "/discover" || pathname === "/discover/quiz") return;
 
     const fullPath = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : "");
     if (lastRecordedPath.current === fullPath) return;

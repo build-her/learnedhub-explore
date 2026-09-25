@@ -201,7 +201,7 @@ export default function DefendPage({
           <p className="type-body text-muted">
             The course you are trying to defend could not be found.
           </p>
-          <Link href="/explore" className="type-body text-explore hover:underline">
+          <Link href="/explore/courses" className="type-body text-explore hover:underline">
             ← Back to Explore Courses
           </Link>
         </div>
@@ -311,7 +311,7 @@ export default function DefendPage({
           />
 
           <div className="flex items-center justify-between pt-xs text-muted">
-            <Link href="/explore" className="type-caption hover:text-explore hover:underline">
+            <Link href="/explore/courses" className="type-caption hover:text-explore hover:underline">
               ← Defend another course
             </Link>
             <Link href="/dossier" className="type-caption text-explore font-semibold hover:underline">

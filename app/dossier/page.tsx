@@ -159,6 +159,9 @@ export default function DossierPage() {
             <Link href="/explore" className="type-caption text-explore hover:underline">
               Explore
             </Link>
+            <Link href="/build" className="type-caption text-build hover:underline">
+              Build
+            </Link>
           </div>
         </div>
 
@@ -251,6 +254,27 @@ export default function DossierPage() {
                 learnerName={learner?.preferred_name}
               />
             ))}
+
+            {/* Dossier Continue Link Callout */}
+            <div className="rounded-xl bg-surface-base border border-build-border p-md sm:p-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md mt-sm shadow-sm">
+              <div className="flex flex-col gap-0.5">
+                <span className="type-caption font-bold text-xs uppercase tracking-wider text-build">
+                  Next Step: Build
+                </span>
+                <p className="type-body font-semibold text-main">
+                  Ready to test your skills?
+                </p>
+                <p className="type-caption text-muted">
+                  Try a real skill challenge and add verified skills records to your portfolio.
+                </p>
+              </div>
+              <Link
+                href="/build"
+                className="type-body font-bold text-surface-base bg-build rounded-md py-sm px-lg text-center hover:opacity-90 transition-opacity shrink-0"
+              >
+                Continue to Build →
+              </Link>
+            </div>
           </div>
         ) : (
           /* Empty State */
@@ -269,7 +293,7 @@ export default function DossierPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-xs w-full max-w-[360px] pt-sm">
+            <div className="flex flex-col sm:flex-row gap-xs w-full max-w-[480px] pt-sm">
               <Link
                 href="/discover"
                 className="flex-1 py-sm px-md rounded-md bg-discover text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
@@ -281,6 +305,12 @@ export default function DossierPage() {
                 className="flex-1 py-sm px-md rounded-md bg-explore text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
               >
                 Explore Courses →
+              </Link>
+              <Link
+                href="/build"
+                className="flex-1 py-sm px-md rounded-md bg-build text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
+              >
+                Start Build →
               </Link>
             </div>
           </div>

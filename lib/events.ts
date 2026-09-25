@@ -98,6 +98,10 @@ export function resolveScreenAndPathway(
 
   // Discover Pathway
   if (cleanPath === "/discover") {
+    return { screen: "discover_intro", pathway: "discover" };
+  }
+
+  if (cleanPath === "/discover/quiz") {
     const stepParam = searchParams?.get("step");
     const stepNum = stepParam ? parseInt(stepParam, 10) : 1;
     return {
@@ -112,6 +116,10 @@ export function resolveScreenAndPathway(
 
   // Explore Pathway
   if (cleanPath === "/explore") {
+    return { screen: "explore_intro", pathway: "explore" };
+  }
+
+  if (cleanPath === "/explore/courses") {
     return { screen: "explore_pathway_list", pathway: "explore" };
   }
 
@@ -123,14 +131,24 @@ export function resolveScreenAndPathway(
     return { screen: "explore_course_detail", pathway: "explore" };
   }
 
-  // Build Pathway
-  if (cleanPath === "/build") {
-    return { screen: "build_challenge", pathway: "build" };
+  // Shared Coming Soon Screen (Build / Courses / Learn)
+  if (
+    cleanPath === "/coming-soon" ||
+    cleanPath === "/build" ||
+    cleanPath === "/courses" ||
+    cleanPath === "/learn"
+  ) {
+    return { screen: "coming_soon", pathway: "build" };
   }
 
   // Dossier Portfolio Screen
   if (cleanPath === "/dossier") {
     return { screen: "dossier", pathway: "discover" };
+  }
+
+  // Sample Dossier Screen
+  if (cleanPath === "/dossier/sample") {
+    return { screen: "dossier_sample", pathway: "discover" };
   }
 
   // Shared Artifact View

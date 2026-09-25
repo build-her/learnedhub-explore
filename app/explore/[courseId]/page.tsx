@@ -85,7 +85,7 @@ export default async function CourseProfilePage({
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
-        <Link href="/explore" className="type-caption text-muted">
+        <Link href="/explore/courses" className="type-caption text-muted hover:text-explore">
           ← Back to search
         </Link>
 

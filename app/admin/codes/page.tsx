@@ -103,8 +103,8 @@ export default function AdminCodesPage() {
             </span>
             <h1 className="type-display-lg text-main">Facilitator Code Generator</h1>
           </div>
-          <Link href="/entry" className="type-caption text-explore hover:underline">
-            ← Back to App Entry
+          <Link href="/" className="type-caption text-explore hover:underline">
+            ← Back to App
           </Link>
         </div>
 

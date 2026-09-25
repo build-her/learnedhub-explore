@@ -27,7 +27,7 @@ const PATHWAYS: Pathway[] = [
     tagline: "Curious · Exploratory · Personal",
     desc: "A short, interactive quiz that shows you which stream or field actually fits you — not just describes it. One sitting, nothing to sign up for.",
     cta: "Start Discover",
-    href: "/entry?next=discover",
+    href: "/discover",
     colorClass: "text-discover",
     tintClass: "bg-discover-tint",
     borderClass: "border-discover-border",
@@ -39,7 +39,7 @@ const PATHWAYS: Pathway[] = [
     tagline: "Investigative · Informative · Possibility-driven",
     desc: "Look into real courses, see real admissions data, understand what each field actually leads to — and what AI changes, and what it doesn't.",
     cta: "Start Explore",
-    href: "/entry?next=explore",
+    href: "/explore",
     colorClass: "text-explore",
     tintClass: "bg-explore-tint",
     borderClass: "border-explore-border",
@@ -51,7 +51,7 @@ const PATHWAYS: Pathway[] = [
     tagline: "Active · Challenging · Energetic",
     desc: "Try a real skill challenge in 30 minutes. Walk away with something to show for it — a timestamped Skills Record with an evidence note.",
     cta: "Start Build",
-    href: "/entry?next=build",
+    href: "/build",
     colorClass: "text-build",
     tintClass: "bg-build-tint",
     borderClass: "border-build-border",
@@ -75,13 +75,13 @@ export default function Home() {
         <span className="type-h2 text-discover">LearnedHub</span>
         <div className="flex items-center gap-sm">
           <Link
-            href="/dossier"
+            href="/dossier/sample"
             className="type-caption text-main font-semibold hover:text-discover"
           >
-            Dossier
+            Sample Dossier
           </Link>
           <Link
-            href="/entry"
+            href="/discover"
             className="type-caption bg-discover text-surface-base px-md py-xs rounded-full font-semibold"
           >
             Get started
@@ -104,7 +104,7 @@ export default function Home() {
         </p>
         <div className="mt-lg flex items-center gap-sm">
           <Link
-            href="/entry"
+            href="/discover"
             className="type-body font-bold bg-surface-base text-discover px-lg py-sm rounded-full shadow-md"
           >
             Start with Discover →
@@ -320,7 +320,7 @@ export default function Home() {
           Find your path, explore it and see where it can lead.
         </p>
         <Link
-          href="/entry"
+          href="/discover"
           className="inline-block type-body font-bold bg-surface-base text-discover px-xl py-md rounded-full shadow-md"
         >
           Start with Discover →
@@ -333,8 +333,9 @@ export default function Home() {
           {[
             { label: "Discover", href: "/discover" },
             { label: "Explore", href: "/explore" },
-            { label: "Dossier", href: "/dossier" },
-            { label: "Build", href: "/entry?next=build" },
+            { label: "See a sample Dossier", href: "/dossier/sample" },
+            { label: "Build", href: "/build" },
+            { label: "Courses", href: "/build" },
             { label: "Schools" },
             { label: "Parents" },
             { label: "Partners" },
