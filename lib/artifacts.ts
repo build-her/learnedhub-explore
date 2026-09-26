@@ -11,6 +11,7 @@ export interface PlanContent {
   attempt_number?: number;
   created_at?: string;
   learner_name?: string;
+  reflection_text?: string;
   [key: string]: unknown;
 }
 
@@ -108,6 +109,33 @@ export async function createArtifact(params: {
     return created;
   } catch (err) {
     console.error("Unexpected error creating artifact:", err);
+    return null;
+  }
+}
+
+/**
+ * Updates an existing artifact's content in the `artifacts` table.
+ */
+export async function updateArtifact(
+  id: string,
+  content: ArtifactContent
+): Promise<Artifact | null> {
+  try {
+    const { data, error } = await supabase
+      .from("artifacts")
+      .update({ content })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to update artifact in Supabase:", error);
+      return null;
+    }
+
+    return data as Artifact;
+  } catch (err) {
+    console.error("Unexpected error updating artifact:", err);
     return null;
   }
 }

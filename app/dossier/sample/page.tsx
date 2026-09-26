@@ -89,6 +89,7 @@ export default function SampleDossierPage() {
             attemptNumber={1}
             summaryText="Based on assessment responses indicating strong curiosity for how physical systems work and high problem-solving engagement, the Science stream is the recommended academic match. This is a starting point for exploring engineering, medicine, and computing disciplines."
             learnerName="Sample Student (e.g. Tobi)"
+            reflectionText="A clinic near my family had vaccines spoil because of unreliable power; a biomedical engineer could design solar refrigeration to prevent that."
           />
         </div>
 

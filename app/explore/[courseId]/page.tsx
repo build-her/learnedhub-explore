@@ -8,66 +8,92 @@ interface CourseRow {
   faculty: string;
   name: string;
   stream: Course["stream"];
-  admissions_json: {
+  short_description?: string | null;
+  jamb_subjects?: string | null;
+  waec_requirements?: string | null;
+  utme_cutoff?: string | null;
+  duration?: string | null;
+  deep_dive?: string | null;
+  profile_status: "breadth-only" | "full-profile";
+  offered_at_list?: string[] | null;
+  last_verified_cycle?: string | null;
+  admissions_json?: {
     id?: string;
     slug?: string;
     shortDescription?: string;
     deepDive?: string;
-    jambSubjects?: string[];
+    jambSubjects?: string[] | string;
     waecRequirements?: string;
     utmeCutoff?: string;
     duration?: string;
   } | null;
-  profile_status: "breadth-only" | "full-profile";
-  offered_at_json: Course["offeredAt"] | null;
-  last_verified_cycle: string | null;
+  offered_at_json?: Course["offeredAt"] | null;
 }
 
 function mapCourseRow(row: CourseRow): Course {
   const admissions = row.admissions_json || {};
   return {
-    id: admissions.id || admissions.slug || row.id,
+    id: row.id,
     name: row.name,
     stream: row.stream,
     faculty: row.faculty,
-    shortDescription: admissions.shortDescription || "",
+    shortDescription: row.short_description || admissions.shortDescription || "",
     profileStatus: row.profile_status,
-    jambSubjects: admissions.jambSubjects || undefined,
-    waecRequirements: admissions.waecRequirements || undefined,
-    utmeCutoff: admissions.utmeCutoff || undefined,
-    duration: admissions.duration || undefined,
-    deepDive: admissions.deepDive || undefined,
+    jambSubjects: row.jamb_subjects || (Array.isArray(admissions.jambSubjects) ? admissions.jambSubjects.join(", ") : admissions.jambSubjects) || undefined,
+    waecRequirements: row.waec_requirements || admissions.waecRequirements || undefined,
+    utmeCutoff: row.utme_cutoff || admissions.utmeCutoff || undefined,
+    duration: row.duration || admissions.duration || undefined,
+    deepDive: row.deep_dive || admissions.deepDive || undefined,
+    offeredAtList: row.offered_at_list || (Array.isArray(row.offered_at_json) ? row.offered_at_json.map((u) => typeof u === "string" ? u : u.university) : undefined),
     offeredAt: row.offered_at_json || undefined,
+    lastVerifiedCycle: row.last_verified_cycle ?? null,
   };
+}
+
+function normalizeCourseName(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/\(.*?\)/g, "")      // strip parenthetical qualifications like (MBBS), (DVM), etc.
+    .replace(/\b(and|&)\b/gi, "") // strip 'and' and '&'
+    .replace(/[^a-z0-9]/gi, "")   // strip all punctuation, hyphens, slashes, and whitespace
+    .trim();
 }
 
 async function getCourseFromSupabase(courseId: string): Promise<Course | null> {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId);
-  let query = supabase.from("courses").select("*");
 
   if (isUuid) {
-    query = query.eq("id", courseId);
-  } else {
-    query = query.filter("admissions_json->>id", "eq", courseId);
-  }
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("id", courseId)
+      .maybeSingle();
 
-  const { data, error } = await query.maybeSingle();
-
-  if (error || !data) {
-    if (!isUuid) {
-      const { data: slugData } = await supabase
-        .from("courses")
-        .select("*")
-        .filter("admissions_json->>slug", "eq", courseId)
-        .maybeSingle();
-      if (slugData) {
-        return mapCourseRow(slugData as CourseRow);
-      }
+    if (!error && data) {
+      return mapCourseRow(data as CourseRow);
     }
     return null;
   }
 
-  return mapCourseRow(data as CourseRow);
+  // Non-UUID slug fallback: fetch courses and match using normalized strings
+  const { data: allCourses, error } = await supabase.from("courses").select("*");
+  if (error || !allCourses) return null;
+
+  const target = normalizeCourseName(courseId);
+  const rows = allCourses as CourseRow[];
+
+  // 1. Try exact normalized match
+  const exact = rows.find((r) => normalizeCourseName(r.name) === target);
+  if (exact) return mapCourseRow(exact);
+
+  // 2. Try bidirectional substring normalized match
+  const substringMatch = rows.find((r) => {
+    const norm = normalizeCourseName(r.name);
+    return norm.includes(target) || target.includes(norm);
+  });
+  if (substringMatch) return mapCourseRow(substringMatch);
+
+  return null;
 }
 
 export default async function CourseProfilePage({
@@ -118,7 +144,11 @@ export default async function CourseProfilePage({
                   JAMB Subjects
                 </span>
                 <p className="type-body text-main">
-                  {course.jambSubjects?.join(", ") ?? "Not yet available"}
+                  {typeof course.jambSubjects === "string"
+                    ? course.jambSubjects
+                    : Array.isArray(course.jambSubjects)
+                    ? (course.jambSubjects as string[]).join(", ")
+                    : "Not yet available"}
                 </p>
               </div>
 
@@ -155,24 +185,37 @@ export default async function CourseProfilePage({
                 <summary className="type-h2 text-main cursor-pointer">
                   What studying this actually involves
                 </summary>
-                <p className="type-body text-main mt-sm">{course.deepDive}</p>
+                <p className="type-body text-main mt-sm leading-relaxed">{course.deepDive}</p>
               </details>
             )}
 
-            {course.offeredAt && course.offeredAt.length > 0 && (
+            {((course.offeredAtList && course.offeredAtList.length > 0) || (course.offeredAt && course.offeredAt.length > 0)) && (
               <div className="rounded-lg border border-explore-border bg-surface-base p-lg flex flex-col gap-sm">
                 <h2 className="type-h2 text-main mb-xs">Where it&apos;s offered</h2>
-                {course.offeredAt.map((uni) => (
-                  <div key={uni.university} className="flex flex-col gap-xs">
-                    <p className="type-body text-main font-semibold">
-                      {uni.university}{" "}
-                      <span className="type-caption text-muted">({uni.type})</span>
-                    </p>
-                    {uni.notes && (
-                      <p className="type-caption text-muted">{uni.notes}</p>
-                    )}
+                {course.offeredAtList && course.offeredAtList.length > 0 ? (
+                  <div className="flex flex-wrap gap-xs">
+                    {course.offeredAtList.map((uni) => (
+                      <span
+                        key={uni}
+                        className="type-caption font-semibold px-md py-xs rounded-md bg-surface-tint border border-line text-main"
+                      >
+                        {uni}
+                      </span>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  course.offeredAt?.map((uni) => (
+                    <div key={uni.university} className="flex flex-col gap-xs">
+                      <p className="type-body text-main font-semibold">
+                        {uni.university}{" "}
+                        <span className="type-caption text-muted">({uni.type})</span>
+                      </p>
+                      {uni.notes && (
+                        <p className="type-caption text-muted">{uni.notes}</p>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </>

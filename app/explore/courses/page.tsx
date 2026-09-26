@@ -23,36 +23,45 @@ interface CourseRow {
   faculty: string;
   name: string;
   stream: CourseStream;
-  admissions_json: {
+  short_description?: string | null;
+  jamb_subjects?: string | null;
+  waec_requirements?: string | null;
+  utme_cutoff?: string | null;
+  duration?: string | null;
+  deep_dive?: string | null;
+  profile_status: "breadth-only" | "full-profile";
+  offered_at_list?: string[] | null;
+  last_verified_cycle?: string | null;
+  admissions_json?: {
     id?: string;
     slug?: string;
     shortDescription?: string;
     deepDive?: string;
-    jambSubjects?: string[];
+    jambSubjects?: string[] | string;
     waecRequirements?: string;
     utmeCutoff?: string;
     duration?: string;
   } | null;
-  profile_status: "breadth-only" | "full-profile";
-  offered_at_json: Course["offeredAt"] | null;
-  last_verified_cycle: string | null;
+  offered_at_json?: Course["offeredAt"] | null;
 }
 
 function mapCourseRow(row: CourseRow): Course {
   const admissions = row.admissions_json || {};
   return {
-    id: admissions.id || admissions.slug || row.id,
+    id: row.id,
     name: row.name,
     stream: row.stream,
     faculty: row.faculty,
-    shortDescription: admissions.shortDescription || "",
+    shortDescription: row.short_description || admissions.shortDescription || "",
     profileStatus: row.profile_status,
-    jambSubjects: admissions.jambSubjects || undefined,
-    waecRequirements: admissions.waecRequirements || undefined,
-    utmeCutoff: admissions.utmeCutoff || undefined,
-    duration: admissions.duration || undefined,
-    deepDive: admissions.deepDive || undefined,
+    jambSubjects: row.jamb_subjects || (Array.isArray(admissions.jambSubjects) ? admissions.jambSubjects.join(", ") : admissions.jambSubjects) || undefined,
+    waecRequirements: row.waec_requirements || admissions.waecRequirements || undefined,
+    utmeCutoff: row.utme_cutoff || admissions.utmeCutoff || undefined,
+    duration: row.duration || admissions.duration || undefined,
+    deepDive: row.deep_dive || admissions.deepDive || undefined,
+    offeredAtList: row.offered_at_list || (Array.isArray(row.offered_at_json) ? row.offered_at_json.map((u) => typeof u === "string" ? u : u.university) : undefined),
     offeredAt: row.offered_at_json || undefined,
+    lastVerifiedCycle: row.last_verified_cycle ?? null,
   };
 }
 

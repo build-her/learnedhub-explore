@@ -204,6 +204,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
             jambSubjects={defenseData?.jamb_subjects}
             caseText={defenseData?.case_text}
             learnerName={originalLearnerName}
+            reflectionText={planData?.reflection_text}
           />
 
           {/* Export & Sharing Bar */}

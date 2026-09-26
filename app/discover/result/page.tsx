@@ -21,6 +21,7 @@ import {
 } from "@/lib/discover-attempts";
 import {
   createArtifact,
+  updateArtifact,
   getArtifactsByLearnerId,
   type Artifact,
 } from "@/lib/artifacts";
@@ -45,6 +46,12 @@ function ResultContent() {
   const [attempts, setAttempts] = useState<DiscoverAttempt[]>([]);
   const [selectedAttempt, setSelectedAttempt] = useState<DiscoverAttempt | null>(null);
   const [planArtifact, setPlanArtifact] = useState<Artifact | null>(null);
+  const [reflectionInput, setReflectionInput] = useState("");
+  const [isSavingReflection, setIsSavingReflection] = useState(false);
+  const [reflectionSaveFeedback, setReflectionSaveFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const artifactRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +149,9 @@ function ResultContent() {
         setAttempts(learnerAttempts);
         setSelectedAttempt(chosenAttempt);
         setPlanArtifact(currentArtifact);
+        const existingReflection =
+          (currentArtifact?.content as { reflection_text?: string })?.reflection_text || "";
+        setReflectionInput(existingReflection);
 
         if (!error && data && data.content_json) {
           setStreamData({
@@ -205,12 +215,71 @@ function ResultContent() {
               (a.content as { attempt_number?: number })?.attempt_number === attempt.attempt_number
           );
           setPlanArtifact(matched || null);
+          const existingReflection =
+            (matched?.content as { reflection_text?: string })?.reflection_text || "";
+          setReflectionInput(existingReflection);
+          setReflectionSaveFeedback(null);
         }
       } catch (err) {
         console.error("Error switching artifact:", err);
       }
 
       setLoading(false);
+    }
+  }
+
+  // Handler for saving one-sentence reflection into existing plan artifact
+  async function handleSaveReflection(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    const cleanReflection = reflectionInput.trim();
+    if (!cleanReflection) {
+      setReflectionSaveFeedback({
+        type: "error",
+        message: "Please write a sentence before saving.",
+      });
+      return;
+    }
+
+    if (!planArtifact) {
+      setReflectionSaveFeedback({
+        type: "error",
+        message: "Plan artifact not found. Please refresh and try again.",
+      });
+      return;
+    }
+
+    setIsSavingReflection(true);
+    setReflectionSaveFeedback(null);
+
+    try {
+      const currentContent = (planArtifact.content || {}) as Record<string, unknown>;
+      const updatedContent = {
+        ...currentContent,
+        reflection_text: cleanReflection,
+      };
+
+      const updated = await updateArtifact(planArtifact.id, updatedContent);
+
+      if (updated) {
+        setPlanArtifact(updated);
+        setReflectionSaveFeedback({
+          type: "success",
+          message: "Saved to your Field Action Plan!",
+        });
+      } else {
+        setReflectionSaveFeedback({
+          type: "error",
+          message: "Could not save reflection. Please check your connection and try again.",
+        });
+      }
+    } catch (err) {
+      console.error("Error saving reflection:", err);
+      setReflectionSaveFeedback({
+        type: "error",
+        message: "An unexpected error occurred while saving.",
+      });
+    } finally {
+      setIsSavingReflection(false);
     }
   }
 
@@ -357,7 +426,51 @@ function ResultContent() {
               </div>
             )}
 
-            <span className="type-caption text-muted">{content.format}</span>
+            {/* Redemptive Impact Reflection Textarea & Save Action */}
+            {activeTab === "redemptive-impact" && (
+              <div className="mt-md pt-md border-t border-discover-border/50 flex flex-col gap-sm">
+                <label htmlFor="reflection-input" className="type-caption font-bold text-main">
+                  Your One-Sentence Reflection
+                </label>
+                <textarea
+                  id="reflection-input"
+                  rows={3}
+                  value={reflectionInput}
+                  onChange={(e) => {
+                    setReflectionInput(e.target.value);
+                    if (reflectionSaveFeedback) setReflectionSaveFeedback(null);
+                  }}
+                  placeholder="Write your one-sentence reflection here..."
+                  className="w-full rounded-md border border-discover-border bg-surface-base p-md type-body text-main placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-discover/40 resize-none transition-all"
+                />
+                <div className="flex flex-wrap items-center justify-between gap-sm">
+                  <button
+                    type="button"
+                    onClick={handleSaveReflection}
+                    disabled={isSavingReflection || !reflectionInput.trim()}
+                    className={`type-caption font-semibold px-lg py-xs rounded-md bg-discover text-surface-base hover:opacity-90 transition-opacity ${
+                      isSavingReflection || !reflectionInput.trim() ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {isSavingReflection ? "Saving..." : "Save"}
+                  </button>
+
+                  {reflectionSaveFeedback && (
+                    <span
+                      className={`type-caption ${
+                        reflectionSaveFeedback.type === "success"
+                          ? "text-green-700 font-semibold"
+                          : "text-red-600 font-semibold"
+                      }`}
+                    >
+                      {reflectionSaveFeedback.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <span className="type-caption text-muted mt-xs block">{content.format}</span>
           </div>
         )}
 
@@ -382,6 +495,7 @@ function ResultContent() {
             createdAt={planArtifact?.created_at || (selectedAttempt?.created_at ?? undefined)}
             attemptNumber={selectedAttempt?.attempt_number}
             summaryText={`This result was generated from a short self-assessment quiz. It's a starting point for exploring ${streamLabel} — not a final decision.`}
+            reflectionText={(planArtifact?.content as { reflection_text?: string })?.reflection_text}
             learnerName={learnerName}
           />
 

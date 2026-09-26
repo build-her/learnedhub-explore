@@ -49,30 +49,86 @@ export default function DefendPage({
       // 2. Try Supabase courses table
       try {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId);
-        let query = supabase.from("courses").select("*");
+        let data: Record<string, any> | null = null;
+        let error: unknown = null;
+
         if (isUuid) {
-          query = query.eq("id", courseId);
+          const res = await supabase.from("courses").select("*").eq("id", courseId).maybeSingle();
+          data = res.data;
+          error = res.error;
         } else {
-          query = query.filter("admissions_json->>id", "eq", courseId);
+          const res = await supabase.from("courses").select("*");
+          if (!res.error && res.data) {
+            const target = courseId
+              .toLowerCase()
+              .replace(/\(.*?\)/g, "")
+              .replace(/\b(and|&)\b/gi, "")
+              .replace(/[^a-z0-9]/gi, "")
+              .trim();
+            const rows = res.data as Array<{ name: string }>;
+            const match = rows.find((r) => {
+              const norm = r.name
+                .toLowerCase()
+                .replace(/\(.*?\)/g, "")
+                .replace(/\b(and|&)\b/gi, "")
+                .replace(/[^a-z0-9]/gi, "")
+                .trim();
+              return norm === target;
+            }) || rows.find((r) => {
+              const norm = r.name
+                .toLowerCase()
+                .replace(/\(.*?\)/g, "")
+                .replace(/\b(and|&)\b/gi, "")
+                .replace(/[^a-z0-9]/gi, "")
+                .trim();
+              return norm.includes(target) || target.includes(norm);
+            });
+            if (match) data = match;
+          }
         }
 
-        const { data, error } = await query.maybeSingle();
         if (isMounted) {
           if (!error && data) {
-            const admissions = data.admissions_json || {};
+            const row = data as {
+              id: string;
+              name: string;
+              stream: Course["stream"];
+              faculty: string;
+              short_description?: string | null;
+              jamb_subjects?: string | null;
+              waec_requirements?: string | null;
+              utme_cutoff?: string | null;
+              duration?: string | null;
+              deep_dive?: string | null;
+              profile_status: Course["profileStatus"];
+              offered_at_list?: string[] | null;
+              admissions_json?: {
+                id?: string;
+                slug?: string;
+                shortDescription?: string;
+                deepDive?: string;
+                jambSubjects?: string[] | string;
+                waecRequirements?: string;
+                utmeCutoff?: string;
+                duration?: string;
+              } | null;
+              offered_at_json?: Course["offeredAt"] | null;
+            };
+            const admissions = row.admissions_json || {};
             setCourse({
-              id: admissions.id || admissions.slug || data.id,
-              name: data.name,
-              stream: data.stream,
-              faculty: data.faculty,
-              shortDescription: admissions.shortDescription || "",
-              profileStatus: data.profile_status,
-              jambSubjects: admissions.jambSubjects || undefined,
-              waecRequirements: admissions.waecRequirements || undefined,
-              utmeCutoff: admissions.utmeCutoff || undefined,
-              duration: admissions.duration || undefined,
-              deepDive: admissions.deepDive || undefined,
-              offeredAt: data.offered_at_json || undefined,
+              id: row.id,
+              name: row.name,
+              stream: row.stream,
+              faculty: row.faculty,
+              shortDescription: row.short_description || admissions.shortDescription || "",
+              profileStatus: row.profile_status,
+              jambSubjects: row.jamb_subjects || (Array.isArray(admissions.jambSubjects) ? admissions.jambSubjects.join(", ") : admissions.jambSubjects) || undefined,
+              waecRequirements: row.waec_requirements || admissions.waecRequirements || undefined,
+              utmeCutoff: row.utme_cutoff || admissions.utmeCutoff || undefined,
+              duration: row.duration || admissions.duration || undefined,
+              deepDive: row.deep_dive || admissions.deepDive || undefined,
+              offeredAtList: row.offered_at_list || (Array.isArray(row.offered_at_json) ? row.offered_at_json.map((u) => typeof u === "string" ? u : u.university) : undefined),
+              offeredAt: row.offered_at_json || undefined,
             });
           }
           setCourseLoading(false);

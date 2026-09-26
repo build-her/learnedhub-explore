@@ -60,6 +60,7 @@ function ArtifactItem({
         summaryText={summary}
         jambSubjects={defenseData?.jamb_subjects}
         caseText={defenseData?.case_text}
+        reflectionText={planData?.reflection_text}
         learnerName={learnerName || (artifact.content as { learner_name?: string })?.learner_name}
       />
 

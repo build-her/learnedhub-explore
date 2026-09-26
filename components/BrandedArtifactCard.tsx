@@ -12,8 +12,9 @@ export interface BrandedArtifactCardProps {
   learnerName?: string;
   summaryText?: string;
   attemptNumber?: number;
-  jambSubjects?: string[];
+  jambSubjects?: string[] | string;
   caseText?: string;
+  reflectionText?: string;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ const BrandedArtifactCard = forwardRef<HTMLDivElement, BrandedArtifactCardProps>
       attemptNumber,
       jambSubjects,
       caseText,
+      reflectionText,
       className = "",
     },
     ref
@@ -104,21 +106,27 @@ const BrandedArtifactCard = forwardRef<HTMLDivElement, BrandedArtifactCardProps>
         )}
 
         {/* Explore Field Defense Specifics: JAMB Subjects */}
-        {!isPlan && jambSubjects && jambSubjects.length > 0 && (
+        {!isPlan && jambSubjects && (Array.isArray(jambSubjects) ? jambSubjects.length > 0 : Boolean(jambSubjects)) && (
           <div className="flex flex-col gap-xs">
             <span className="type-caption text-muted uppercase tracking-wider text-xs">
               Required JAMB Subjects
             </span>
-            <div className="flex flex-wrap gap-xs">
-              {jambSubjects.map((sub) => (
-                <span
-                  key={sub}
-                  className="type-caption text-xs px-sm py-xs rounded bg-explore-tint text-explore border border-explore-border font-medium"
-                >
-                  {sub}
-                </span>
-              ))}
-            </div>
+            {Array.isArray(jambSubjects) ? (
+              <div className="flex flex-wrap gap-xs">
+                {jambSubjects.map((sub) => (
+                  <span
+                    key={sub}
+                    className="type-caption text-xs px-sm py-xs rounded bg-explore-tint text-explore border border-explore-border font-medium"
+                  >
+                    {sub}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="type-body text-main text-xs leading-relaxed bg-explore-tint/40 border border-explore-border/60 rounded-md p-sm">
+                {jambSubjects}
+              </p>
+            )}
           </div>
         )}
 
@@ -130,6 +138,18 @@ const BrandedArtifactCard = forwardRef<HTMLDivElement, BrandedArtifactCardProps>
             </span>
             <p className="type-body text-main italic whitespace-pre-wrap leading-relaxed">
               &ldquo;{caseText}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Field Action Plan Specifics: Redemptive Impact Reflection */}
+        {isPlan && reflectionText && (
+          <div className="flex flex-col gap-xs rounded-lg bg-discover-tint/60 border border-discover-border p-md">
+            <span className="type-caption text-discover font-bold uppercase tracking-wider text-xs">
+              Personal Reflection · Redemptive Impact
+            </span>
+            <p className="type-body text-main italic whitespace-pre-wrap leading-relaxed">
+              &ldquo;{reflectionText}&rdquo;
             </p>
           </div>
         )}
