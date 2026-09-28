@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { COURSES } from "@/lib/courses";
 import ContactModal, { type ContactCategory } from "@/components/ContactModal";
+import SiteFooter from "@/components/SiteFooter";
 
 type PathwayKey = "discover" | "explore" | "build";
 
@@ -341,49 +342,7 @@ export default function Home() {
         </Link>
       </div>
 
-      <div className="bg-dossier px-lg py-lg">
-        <div className="type-h2 text-surface-base/90 mb-md">LearnedHub</div>
-        <div className="flex flex-wrap gap-x-md gap-y-xs mb-md">
-          {[
-            { label: "Discover", href: "/discover" },
-            { label: "Explore", href: "/explore" },
-            { label: "See a sample Dossier", href: "/dossier/sample" },
-            { label: "Build", href: "/build" },
-            { label: "Courses", href: "/build" },
-            { label: "Schools", onAction: () => setContactCategory("School Inquiry") },
-            { label: "Parents", onAction: () => setContactCategory("Unlock Full Access") },
-            { label: "Partners", onAction: () => setContactCategory("Sponsorship") },
-            { label: "About" },
-            { label: "Contact", onAction: () => setContactCategory("School Inquiry") },
-          ].map((item) =>
-            item.href ? (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="type-caption text-surface-base/80 hover:text-surface-base transition-colors"
-              >
-                {item.label}
-              </Link>
-            ) : item.onAction ? (
-              <button
-                key={item.label}
-                type="button"
-                onClick={item.onAction}
-                className="type-caption text-surface-base/80 hover:text-surface-base transition-colors cursor-pointer"
-              >
-                {item.label}
-              </button>
-            ) : (
-              <span key={item.label} className="type-caption text-surface-base/60">
-                {item.label}
-              </span>
-            )
-          )}
-        </div>
-        <div className="type-caption text-surface-base/40">
-          © 2026 LearnedHub
-        </div>
-      </div>
+      <SiteFooter onOpenContact={(cat) => setContactCategory(cat)} />
 
       {/* Shared Contact Modal */}
       <ContactModal
