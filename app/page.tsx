@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COURSES } from "@/lib/courses";
+import ContactModal, { type ContactCategory } from "@/components/ContactModal";
 
 type PathwayKey = "discover" | "explore" | "build";
 
@@ -66,6 +67,7 @@ const pathwayBg: Record<PathwayKey, string> = {
 
 export default function Home() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [contactCategory, setContactCategory] = useState<ContactCategory | null>(null);
   const active = PATHWAYS[activeIdx];
   const previewCourses = COURSES.slice(0, 2);
 
@@ -262,7 +264,11 @@ export default function Home() {
             It fits right alongside the career guidance you&apos;re already
             doing.
           </p>
-          <button className="w-full border-2 border-discover text-discover type-body font-bold py-sm rounded-md bg-surface-base">
+          <button
+            type="button"
+            onClick={() => setContactCategory("School Inquiry")}
+            className="w-full border-2 border-discover text-discover type-body font-bold py-sm rounded-md bg-surface-base text-center hover:opacity-90 transition-opacity cursor-pointer"
+          >
             Talk to us about your school
           </button>
         </div>
@@ -286,7 +292,11 @@ export default function Home() {
             growing skills. Built for future-relevant pathways, not
             generic advice.
           </p>
-          <button className="w-full bg-explore text-surface-base type-body font-bold py-sm rounded-md">
+          <button
+            type="button"
+            onClick={() => setContactCategory("Unlock Full Access")}
+            className="w-full bg-explore text-surface-base type-body font-bold py-sm rounded-md text-center hover:opacity-90 transition-opacity cursor-pointer"
+          >
             Unlock full access for your child
           </button>
         </div>
@@ -306,8 +316,12 @@ export default function Home() {
             foundations, CSR teams, NGOs and public programmes to change
             that.
           </p>
-          <button className="w-full border-2 border-build text-build type-body font-bold py-sm rounded-md bg-surface-base">
-            Talk to us about sponsored access
+          <button
+            type="button"
+            onClick={() => setContactCategory("Sponsorship")}
+            className="w-full border-2 border-build text-build type-body font-bold py-sm rounded-md bg-surface-base text-center hover:opacity-90 transition-opacity cursor-pointer"
+          >
+            Talk to us about sponsorships
           </button>
         </div>
       </div>
@@ -336,11 +350,11 @@ export default function Home() {
             { label: "See a sample Dossier", href: "/dossier/sample" },
             { label: "Build", href: "/build" },
             { label: "Courses", href: "/build" },
-            { label: "Schools" },
-            { label: "Parents" },
-            { label: "Partners" },
+            { label: "Schools", onAction: () => setContactCategory("School Inquiry") },
+            { label: "Parents", onAction: () => setContactCategory("Unlock Full Access") },
+            { label: "Partners", onAction: () => setContactCategory("Sponsorship") },
             { label: "About" },
-            { label: "Contact" },
+            { label: "Contact", onAction: () => setContactCategory("School Inquiry") },
           ].map((item) =>
             item.href ? (
               <Link
@@ -350,6 +364,15 @@ export default function Home() {
               >
                 {item.label}
               </Link>
+            ) : item.onAction ? (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onAction}
+                className="type-caption text-surface-base/80 hover:text-surface-base transition-colors cursor-pointer"
+              >
+                {item.label}
+              </button>
             ) : (
               <span key={item.label} className="type-caption text-surface-base/60">
                 {item.label}
@@ -361,6 +384,13 @@ export default function Home() {
           © 2026 LearnedHub
         </div>
       </div>
+
+      {/* Shared Contact Modal */}
+      <ContactModal
+        isOpen={contactCategory !== null}
+        onClose={() => setContactCategory(null)}
+        initialCategory={contactCategory || "School Inquiry"}
+      />
     </div>
   );
 }
