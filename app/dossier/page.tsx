@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ShareExportBar from "@/components/ShareExportBar";
 import BrandedArtifactCard from "@/components/BrandedArtifactCard";
-import { getSessionLearnerId } from "@/lib/session";
+import { getSessionLearnerId, clearSessionLearner } from "@/lib/session";
 import { getLearnerById, type Learner } from "@/lib/learners";
 import {
   getArtifactsByLearnerId,
@@ -101,6 +101,19 @@ export default function DossierPage() {
   const [learner, setLearner] = useState<Learner | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "plan" | "defense">("all");
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await clearSessionLearner();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      window.location.href = "/entry";
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -163,20 +176,39 @@ export default function DossierPage() {
             <Link href="/build" className="type-caption text-build hover:underline">
               Build
             </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="type-caption text-muted hover:text-red-600 font-medium underline cursor-pointer disabled:opacity-50"
+            >
+              {loggingOut ? "Logging out..." : "Log out"}
+            </button>
           </div>
         </div>
 
         {/* Dossier Header */}
         <div className="flex flex-col gap-xs rounded-xl bg-surface-base border border-line p-lg sm:p-xl shadow-sm">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-xs">
             <span className="type-caption font-bold text-xs uppercase tracking-wider text-muted">
               LearnedHub Portfolio
             </span>
-            {learner && (
-              <span className="type-caption font-mono font-bold text-xs px-sm py-0.5 rounded bg-surface-tint border border-line text-main">
-                {learner.learner_code}
-              </span>
-            )}
+            <div className="flex items-center gap-xs">
+              {learner && (
+                <span className="type-caption font-mono font-bold text-xs px-sm py-0.5 rounded bg-surface-tint border border-line text-main">
+                  {learner.learner_code}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="type-caption font-medium text-xs px-sm py-0.5 rounded border border-line bg-surface-base text-muted hover:text-red-600 hover:border-red-300 transition-colors cursor-pointer disabled:opacity-50"
+                title="Log out from this learner session"
+              >
+                {loggingOut ? "Logging out..." : "Log out"}
+              </button>
+            </div>
           </div>
 
           <h1 className="type-display-lg text-main">

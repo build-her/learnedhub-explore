@@ -150,16 +150,21 @@ export async function resetSession(): Promise<string> {
 export async function clearSessionLearner(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
+    const token = getSessionToken();
     try {
       clearLegacyLearnerIdCookie();
       localStorage.removeItem("learnedhub_learner_name");
       localStorage.removeItem("learnedhub_learner_code");
+      localStorage.removeItem(SESSION_STORAGE_KEY);
     } catch {
       // Ignore localStorage errors
     }
 
     const res = await fetch(`${getBaseUrl()}/api/learners/logout`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token || undefined }),
+      credentials: "include",
     });
 
     return res.ok;

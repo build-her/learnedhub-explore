@@ -334,13 +334,23 @@ export default function LearnerEntryFlow({
       <div className="rounded-lg border border-explore-border bg-surface-tint p-lg flex flex-col gap-md">
         <div className="flex items-center justify-between">
           <span className="type-caption text-muted">Active LearnedHub Code</span>
-          <button
-            type="button"
-            onClick={handleStartFresh}
-            className="type-caption text-explore hover:underline"
-          >
-            Not you? Start fresh
-          </button>
+          <div className="flex items-center gap-sm">
+            <button
+              type="button"
+              onClick={handleStartFresh}
+              className="type-caption text-explore hover:underline cursor-pointer"
+            >
+              Not you? Start fresh
+            </button>
+            <span className="text-muted text-xs">·</span>
+            <button
+              type="button"
+              onClick={handleStartFresh}
+              className="type-caption font-medium text-muted hover:text-red-600 underline cursor-pointer"
+            >
+              Log out
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between bg-surface-base border border-explore-border rounded-md px-md py-sm">

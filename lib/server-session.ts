@@ -138,6 +138,7 @@ export function clearSessionCookie(res: NextResponse): void {
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    expires: new Date(0),
   });
 
   // Clear legacy cookie as well
@@ -146,5 +147,7 @@ export function clearSessionCookie(res: NextResponse): void {
     value: "",
     path: "/",
     maxAge: 0,
+    expires: new Date(0),
   });
 }
+

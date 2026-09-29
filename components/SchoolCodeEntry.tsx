@@ -214,14 +214,25 @@ export default function SchoolCodeEntry({
             <span className="type-caption text-muted">
               {learnerName ? `Active Learner: ${learnerName}` : "Shared by your school"}
             </span>
-            <button
-              type="button"
-              onClick={handleStartFresh}
-              disabled={loading}
-              className="type-caption text-explore hover:underline disabled:opacity-50"
-            >
-              Not you? Start fresh
-            </button>
+            <div className="flex items-center gap-sm">
+              <button
+                type="button"
+                onClick={handleStartFresh}
+                disabled={loading}
+                className="type-caption text-explore hover:underline disabled:opacity-50 cursor-pointer"
+              >
+                Not you? Start fresh
+              </button>
+              <span className="text-muted text-xs">·</span>
+              <button
+                type="button"
+                onClick={handleStartFresh}
+                disabled={loading}
+                className="type-caption font-medium text-muted hover:text-red-600 underline disabled:opacity-50 cursor-pointer"
+              >
+                Log out
+              </button>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="type-body text-main font-medium">
