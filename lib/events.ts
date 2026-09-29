@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { getSessionLearnerId } from "@/lib/session";
 
 export type EventType =
@@ -20,12 +19,15 @@ export interface LogEventParams {
   learner_id?: string | null;
 }
 
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") return "";
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 /**
- * Inserts an event record into the `events` table in Supabase.
- * Enforces that:
- * - Each insert carries the learner_id from the current session if not explicitly provided.
- * - The `screen` column is always populated with a specific, human-readable screen identifier.
- * - The `pathway` column is always populated (one of 'discover', 'explore', 'build').
+ * Inserts an event record via /api/events using server-side SUPABASE_SERVICE_ROLE_KEY.
  */
 export async function logEvent(params: LogEventParams): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -36,12 +38,10 @@ export async function logEvent(params: LogEventParams): Promise<boolean> {
       learnerId = await getSessionLearnerId();
     }
 
-    // Ensure valid non-null pathway: default to 'discover' if unspecified
     const rawPathway = params.pathway?.trim().toLowerCase();
     const resolvedPathway: PathwayName =
       rawPathway === "explore" || rawPathway === "build" ? rawPathway : "discover";
 
-    // Ensure non-empty screen identifier
     const resolvedScreen = params.screen?.trim() || "home";
 
     const payload = {
@@ -52,14 +52,13 @@ export async function logEvent(params: LogEventParams): Promise<boolean> {
       learner_id: learnerId ?? null,
     };
 
-    const { error } = await supabase.from("events").insert(payload);
+    const res = await fetch(`${getBaseUrl()}/api/events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    if (error) {
-      console.error("Failed to log event:", params.event_type, error);
-      return false;
-    }
-
-    return true;
+    return res.ok;
   } catch (err) {
     console.error("Unexpected error logging event:", params.event_type, err);
     return false;

@@ -4,7 +4,41 @@ import {
   createFacilitatorCodes,
 } from "@/lib/facilitator-codes";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+function isAuthorized(req: Request): boolean {
+  const expectedKey = process.env.ADMIN_API_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!expectedKey) {
+    console.error("ADMIN_API_KEY or SUPABASE_SERVICE_ROLE_KEY is not configured");
+    return false;
+  }
+
+  // Check x-admin-key header
+  const adminKeyHeader = req.headers.get("x-admin-key");
+  if (adminKeyHeader && adminKeyHeader.trim() === expectedKey) {
+    return true;
+  }
+
+  // Check Authorization: Bearer <key>
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (match && match[1].trim() === expectedKey) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export async function GET(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json(
+      { error: "Unauthorized. Admin credentials required." },
+      { status: 401 }
+    );
+  }
+
   try {
     const codes = await getAllFacilitatorCodes();
     return NextResponse.json({ codes });
@@ -15,6 +49,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json(
+      { error: "Unauthorized. Admin credentials required." },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const count = typeof body.count === "number" ? body.count : 1;
@@ -35,4 +76,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to generate codes" }, { status: 500 });
   }
 }
-

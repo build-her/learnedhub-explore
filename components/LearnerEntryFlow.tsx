@@ -211,9 +211,12 @@ export default function LearnerEntryFlow({
 
       // Navigate straight to the journey
       router.push(destinationHref);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error resuming with code:", err);
-      setResumeError("Failed to lookup code. Please try again.");
+      const msg = (err as Error)?.message === "try again later."
+        ? "try again later."
+        : "Failed to lookup code. Please try again.";
+      setResumeError(msg);
     } finally {
       setIsResuming(false);
     }

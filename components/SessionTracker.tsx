@@ -4,11 +4,10 @@ import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   initSession,
-  getLearnerCookie,
   SESSION_STORAGE_KEY,
+  clearLegacyLearnerIdCookie,
 } from "@/lib/session";
 import { logEvent, resolveScreenAndPathway } from "@/lib/events";
-import { supabase } from "@/lib/supabase";
 
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -30,13 +29,16 @@ export default function SessionTracker() {
   // 1. Session initialization & Shared Link Detection
   // NOTE: Device/session tracking does NOT create or imply a learner_id.
   // A learner_id is only created when the user explicitly completes the entry screen.
-  // The learnedhub_learner_id cookie is the single source of truth for learner identity.
+  // The learnedhub_session httpOnly cookie is the single source of truth for learner identity.
   useEffect(() => {
     if (sessionInitialized.current) return;
     sessionInitialized.current = true;
 
     async function handleSessionLifecycle() {
       if (typeof window === "undefined") return;
+
+      // Purge legacy client-writable cookie for existing visitors
+      clearLegacyLearnerIdCookie();
 
       const urlSession = searchParams.get("session");
       const existingStoredToken = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -49,7 +51,11 @@ export default function SessionTracker() {
           if (!existingStoredToken) {
             const visitorToken = generateUUID();
             localStorage.setItem(SESSION_STORAGE_KEY, visitorToken);
-            await supabase.from("sessions").insert({ token: visitorToken });
+            await fetch("/api/sessions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token: visitorToken }),
+            });
           }
 
           // 2. Clean the shared session param from URL
@@ -64,16 +70,13 @@ export default function SessionTracker() {
           }
 
           // 3. For other routes, log artifact_opened_via_share without auto-creating a learner
-          const viewerLearnerId = getLearnerCookie();
           await logEvent({
             event_type: "artifact_opened_via_share",
-            learner_id: viewerLearnerId || null,
             pathway,
             screen,
             metadata_json: {
               shared_from_session: urlSession,
               share_id: searchParams.get("share_id") || undefined,
-              is_new_viewer: !viewerLearnerId,
             },
           });
           return;
@@ -87,10 +90,8 @@ export default function SessionTracker() {
       await initSession();
 
       if (isNewSession) {
-        const currentLearnerId = getLearnerCookie();
         await logEvent({
           event_type: "session_started",
-          learner_id: currentLearnerId || null,
           pathway,
           screen,
           metadata_json: { source: "direct" },

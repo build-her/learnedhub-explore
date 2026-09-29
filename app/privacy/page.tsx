@@ -125,7 +125,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-lg flex flex-col gap-xs type-body text-muted">
               <li>
-                The cookie (named <code className="px-xs py-0.5 bg-surface-tint border border-line rounded text-xs font-mono text-main">learnedhub_learner_id</code>) remembers your active learner session on that device.
+                The cookie (named <code className="px-xs py-0.5 bg-surface-tint border border-line rounded text-xs font-mono text-main">learnedhub_session</code>) stores your learner session securely on that device.
               </li>
               <li>
                 This means you can close your browser tab, come back later, and continue your work without having to log in with credentials.
