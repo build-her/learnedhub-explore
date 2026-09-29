@@ -38,7 +38,11 @@ export default function SchoolCodeEntry({
         if (learner) {
           setLearnerName(learner.preferred_name);
           setActiveCode(learner.learner_code);
-          setSchoolName(learner.acquisition_source !== "Direct" ? learner.acquisition_source : null);
+          setSchoolName(
+            learner.acquisition_source && learner.acquisition_source !== "Direct"
+              ? learner.acquisition_source
+              : null
+          );
           return;
         }
       }
@@ -99,7 +103,11 @@ export default function SchoolCodeEntry({
         await updateSessionLearner(existingLearner.id);
         setLearnerName(existingLearner.preferred_name);
         setActiveCode(existingLearner.learner_code);
-        setSchoolName(existingLearner.acquisition_source !== "Direct" ? existingLearner.acquisition_source : null);
+        setSchoolName(
+          existingLearner.acquisition_source && existingLearner.acquisition_source !== "Direct"
+            ? existingLearner.acquisition_source
+            : null
+        );
         setIsEditing(false);
         setInputCode("");
         setFeedback({
@@ -145,8 +153,11 @@ export default function SchoolCodeEntry({
       if (!resolvedSchoolName) {
         await lookupCodeDetails(cleanCode);
       }
-    } catch {
-      setFeedback({ type: "error", message: "An unexpected error occurred while connecting." });
+    } catch (err: unknown) {
+      const msg = (err as Error)?.message === "try again later."
+        ? "try again later."
+        : "An unexpected error occurred while connecting.";
+      setFeedback({ type: "error", message: msg });
     } finally {
       setLoading(false);
     }

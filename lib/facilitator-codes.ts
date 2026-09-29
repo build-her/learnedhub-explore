@@ -1,18 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 // 6 characters, strictly excluding ambiguous characters: 0, O, 1, I, l (and L)
 export const FACILITATOR_CODE_CHARSET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
-export type FacilitatorCodeRecord = {
-  code: string;
-  school_name?: string | null;
-  facilitator_name?: string | null;
-  notes?: string | null;
-  created_at: string;
-  is_active: boolean;
-};
+import { type FacilitatorCodeRecord } from "@/lib/facilitator-types";
+export { type FacilitatorCodeRecord };
 
 const DATA_DIR = path.resolve(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "facilitator-codes.json");
@@ -93,7 +87,7 @@ export async function createFacilitatorCodes(options: {
 
   // Attempt to sync to Supabase facilitator_codes table if it exists
   try {
-    await supabase.from("facilitator_codes").insert(newRecords);
+    await supabaseServer.from("facilitator_codes").insert(newRecords);
   } catch {
     // Ignore if table does not exist in Supabase yet
   }
@@ -107,7 +101,7 @@ export async function createFacilitatorCodes(options: {
 export async function getAllFacilitatorCodes(): Promise<FacilitatorCodeRecord[]> {
   // Try Supabase first if available
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from("facilitator_codes")
       .select("*")
       .order("created_at", { ascending: false });
@@ -130,7 +124,7 @@ export async function lookupFacilitatorCode(code: string): Promise<FacilitatorCo
 
   // Try Supabase first
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from("facilitator_codes")
       .select("*")
       .eq("code", sanitized)

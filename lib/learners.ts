@@ -1,64 +1,59 @@
-import { supabase } from "@/lib/supabase";
-
 export type Learner = {
-  id: string;
+  id?: string;
   preferred_name: string;
   learner_code: string;
-  acquisition_source: string;
+  acquisition_source?: string;
   entry_point?: string | null;
-  created_at: string;
+  created_at?: string;
 };
 
-const LEARNER_CHARSET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-
-/**
- * Generates an unambiguous 4-digit learner code (format LH-XXXX).
- */
-export function generateLearnerCode(prefix: string = "LH"): string {
-  let suffix = "";
-  for (let i = 0; i < 4; i++) {
-    const idx = Math.floor(Math.random() * LEARNER_CHARSET.length);
-    suffix += LEARNER_CHARSET[idx];
-  }
-  return `${prefix}-${suffix}`;
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") return "";
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
 }
 
 /**
- * Inserts a new learner record into the learners table.
+ * Creates a new learner record via /api/learners.
+ * The server generates the learner code with crypto.randomInt and issues the httpOnly session cookie.
  */
 export async function createLearner(params: {
   preferred_name: string;
-  learner_code?: string;
   acquisition_source?: string;
   entry_point?: string | null;
+  learner_code?: string;
 }): Promise<Learner | null> {
   const preferred_name = params.preferred_name?.trim();
   if (!preferred_name) {
     throw new Error("preferred_name is required");
   }
 
-  const learner_code = params.learner_code?.trim() || generateLearnerCode();
   const acquisition_source = params.acquisition_source?.trim() || "Direct";
   const entry_point = params.entry_point?.trim() || null;
 
   try {
-    const { data, error } = await supabase
-      .from("learners")
-      .insert({
+    const res = await fetch(`${getBaseUrl()}/api/learners`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         preferred_name,
-        learner_code,
         acquisition_source,
         entry_point,
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    if (error) {
-      console.error("Failed to insert learner:", error);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Failed to create learner:", err);
       return null;
     }
 
-    return data as Learner;
+    const data = await res.json();
+    return {
+      preferred_name: data.preferred_name,
+      learner_code: data.learner_code,
+    };
   } catch (err) {
     console.error("Error creating learner:", err);
     return null;
@@ -66,52 +61,92 @@ export async function createLearner(params: {
 }
 
 /**
- * Retrieves a learner by UUID.
+ * Retrieves the current authenticated learner for this session via /api/me.
+ * Returns only preferred_name and learner_code for display.
  */
-export async function getLearnerById(id: string): Promise<Learner | null> {
-  if (!id) return null;
+export async function getCurrentLearner(): Promise<Learner | null> {
   try {
-    const { data, error } = await supabase
-      .from("learners")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
+    const res = await fetch(`${getBaseUrl()}/api/me`);
+    if (!res.ok) return null;
 
-    if (error || !data) return null;
-    return data as Learner;
+    const data = await res.json();
+    if (data.preferred_name && data.learner_code) {
+      return {
+        preferred_name: data.preferred_name,
+        learner_code: data.learner_code,
+      };
+    }
+    return null;
   } catch (err) {
-    console.error("Error fetching learner by ID:", err);
+    console.error("Error fetching current learner via /api/me:", err);
     return null;
   }
 }
 
 /**
- * Retrieves a learner by unique learner_code (supports format LH-XXXX or XXXX).
+ * Compatibility alias for getLearnerById: fetches the current learner from /api/me.
  */
-export async function getLearnerByCode(code: string): Promise<Learner | null> {
+export async function getLearnerById(_id?: string): Promise<Learner | null> {
+  return getCurrentLearner();
+}
+
+/**
+ * Resumes an existing learner session with a LearnedHub Code via /api/learners/resume.
+ * Validates against rate-limiting (throws "try again later." on 429) and establishes httpOnly session.
+ */
+export async function resumeLearner(code: string): Promise<Learner | null> {
   if (!code) return null;
   const raw = code.trim().toUpperCase();
-  let normalized = raw;
-  if (!normalized.startsWith("LH-")) {
-    if (normalized.startsWith("LH")) {
-      normalized = "LH-" + normalized.slice(2);
-    } else {
-      normalized = "LH-" + normalized;
-    }
-  }
 
   try {
-    const { data, error } = await supabase
-      .from("learners")
-      .select("*")
-      .or(`learner_code.eq.${normalized},learner_code.eq.${raw}`)
-      .maybeSingle();
+    const res = await fetch(`${getBaseUrl()}/api/learners/resume`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: raw }),
+    });
 
-    if (error || !data) return null;
-    return data as Learner;
+    if (res.status === 429) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || "try again later.");
+    }
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.success && data.preferred_name && data.learner_code) {
+      return {
+        preferred_name: data.preferred_name,
+        learner_code: data.learner_code,
+      };
+    }
+
+    return null;
   } catch (err) {
-    console.error("Error fetching learner by code:", err);
+    if ((err as Error)?.message === "try again later.") {
+      throw err;
+    }
+    console.error("Error resuming learner by code:", err);
     return null;
   }
 }
 
+/**
+ * Compatibility alias for getLearnerByCode: resumes session via /api/learners/resume.
+ */
+export async function getLearnerByCode(code: string): Promise<Learner | null> {
+  return resumeLearner(code);
+}
+
+/**
+ * Logs out the learner session via /api/learners/logout.
+ */
+export async function logoutLearner(): Promise<boolean> {
+  try {
+    const res = await fetch(`${getBaseUrl()}/api/learners/logout`, {
+      method: "POST",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

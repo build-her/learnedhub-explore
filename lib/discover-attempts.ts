@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { getSessionLearnerId } from "@/lib/session";
 
 export type DiscoverResult = {
@@ -15,6 +14,13 @@ export type DiscoverAttempt = {
   created_at: string;
 };
 
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") return "";
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 /**
  * Extracts a normalized stream key from an attempt's result object or string.
  */
@@ -29,27 +35,20 @@ export function extractStreamFromResult(result: unknown): string | null {
 }
 
 /**
- * Queries all discover attempts for a given learner_id, sorted by attempt_number descending (latest first).
+ * Queries all discover attempts for a given learner_id via /api/discover/attempts.
  */
 export async function getAttemptsByLearnerId(learnerId: string): Promise<DiscoverAttempt[]> {
   if (!learnerId) return [];
 
   try {
-    const { data, error } = await supabase
-      .from("discover_attempts")
-      .select("*")
-      .eq("learner_id", learnerId)
-      .order("attempt_number", { ascending: false });
+    const res = await fetch(
+      `${getBaseUrl()}/api/discover/attempts?learner_id=${encodeURIComponent(learnerId.trim())}`
+    );
 
-    if (error) {
-      // Table may not exist yet or connection error
-      if (error.code !== "PGRST205") {
-        console.error("Error fetching discover attempts by learner_id:", error);
-      }
-      return [];
-    }
+    if (!res.ok) return [];
 
-    return (data || []) as DiscoverAttempt[];
+    const data = await res.json();
+    return (data.attempts || []) as DiscoverAttempt[];
   } catch (err) {
     console.error("Failed to query discover attempts:", err);
     return [];
@@ -57,28 +56,22 @@ export async function getAttemptsByLearnerId(learnerId: string): Promise<Discove
 }
 
 /**
- * Queries the single most recent discover attempt for a given learner_id.
+ * Queries the single most recent discover attempt for a given learner_id via /api/discover/attempts.
  */
 export async function getLatestDiscoverAttempt(learnerId: string): Promise<DiscoverAttempt | null> {
   if (!learnerId) return null;
 
   try {
-    const { data, error } = await supabase
-      .from("discover_attempts")
-      .select("*")
-      .eq("learner_id", learnerId)
-      .order("attempt_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const res = await fetch(
+      `${getBaseUrl()}/api/discover/attempts?learner_id=${encodeURIComponent(
+        learnerId.trim()
+      )}&latest=true`
+    );
 
-    if (error) {
-      if (error.code !== "PGRST205") {
-        console.error("Error fetching latest discover attempt:", error);
-      }
-      return null;
-    }
+    if (!res.ok) return null;
 
-    return (data || null) as DiscoverAttempt | null;
+    const data = await res.json();
+    return (data.attempt || null) as DiscoverAttempt | null;
   } catch (err) {
     console.error("Failed to query latest discover attempt:", err);
     return null;
@@ -86,10 +79,7 @@ export async function getLatestDiscoverAttempt(learnerId: string): Promise<Disco
 }
 
 /**
- * Records a new discover attempt:
- * - Automatically computes the next attempt_number incremented from the learner's previous attempts (1 if first).
- * - Does not overwrite previous attempts.
- * - If no learner exists on the current session, automatically provisions a learner profile so the attempt is preserved.
+ * Records a new discover attempt via /api/discover/attempts POST endpoint.
  */
 export async function recordDiscoverAttempt(params: {
   learnerId?: string | null;
@@ -108,47 +98,24 @@ export async function recordDiscoverAttempt(params: {
       return null;
     }
 
-    // 1. Fetch previous attempts to find the highest attempt_number
-    const { data: previousAttempts, error: fetchError } = await supabase
-      .from("discover_attempts")
-      .select("attempt_number")
-      .eq("learner_id", learnerId)
-      .order("attempt_number", { ascending: false })
-      .limit(1);
+    const res = await fetch(`${getBaseUrl()}/api/discover/attempts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        learnerId,
+        stream: params.stream,
+        answers: params.answers ?? [],
+      }),
+    });
 
-    if (fetchError && fetchError.code !== "PGRST205") {
-      console.error("Error checking previous attempts:", fetchError);
-    }
-
-    const previousMax =
-      previousAttempts && previousAttempts.length > 0 && typeof previousAttempts[0].attempt_number === "number"
-        ? previousAttempts[0].attempt_number
-        : 0;
-
-    const nextAttemptNumber = previousMax + 1;
-
-    // 2. Insert new attempt row with incremented attempt_number
-    const resultPayload: DiscoverResult = {
-      stream: params.stream,
-      answers: params.answers ?? [],
-    };
-
-    const { data: newRow, error: insertError } = await supabase
-      .from("discover_attempts")
-      .insert({
-        learner_id: learnerId,
-        attempt_number: nextAttemptNumber,
-        result: resultPayload,
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("Failed to insert discover attempt:", insertError);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Failed to insert discover attempt via API:", err);
       return null;
     }
 
-    return newRow as DiscoverAttempt;
+    const data = await res.json();
+    return (data.attempt || null) as DiscoverAttempt | null;
   } catch (err) {
     console.error("Unexpected error recording discover attempt:", err);
     return null;

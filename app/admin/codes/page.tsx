@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { type FacilitatorCodeRecord } from "@/lib/facilitator-codes";
+import { type FacilitatorCodeRecord } from "@/lib/facilitator-types";
 
 export default function AdminCodesPage() {
   const [codes, setCodes] = useState<FacilitatorCodeRecord[]>([]);
@@ -16,13 +16,30 @@ export default function AdminCodesPage() {
   const [recentGenerated, setRecentGenerated] = useState<FacilitatorCodeRecord[]>([]);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  async function fetchCodes() {
+  const [adminKey, setAdminKey] = useState<string>("");
+  const [keyInput, setKeyInput] = useState<string>("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  async function fetchCodes(keyToUse?: string) {
+    const key = keyToUse !== undefined ? keyToUse : adminKey;
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/codes");
+      const res = await fetch("/api/admin/codes", {
+        headers: key ? { "x-admin-key": key } : {},
+      });
+
+      if (res.status === 401) {
+        setIsAuthorized(false);
+        setAuthError("Invalid or missing Admin Key. Please enter your authorization key.");
+        return;
+      }
+
       const data = await res.json();
       if (data.codes) {
         setCodes(data.codes);
+        setIsAuthorized(true);
+        setAuthError(null);
       }
     } catch (err) {
       console.error("Failed to load codes:", err);
@@ -32,8 +49,26 @@ export default function AdminCodesPage() {
   }
 
   useEffect(() => {
-    fetchCodes();
+    const saved = typeof window !== "undefined" ? sessionStorage.getItem("lh_admin_key") : null;
+    if (saved) {
+      setAdminKey(saved);
+      setKeyInput(saved);
+      fetchCodes(saved);
+    } else {
+      fetchCodes("");
+    }
   }, []);
+
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    const clean = keyInput.trim();
+    if (!clean) return;
+    setAdminKey(clean);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("lh_admin_key", clean);
+    }
+    fetchCodes(clean);
+  }
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
@@ -41,13 +76,23 @@ export default function AdminCodesPage() {
     try {
       const res = await fetch("/api/admin/codes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
         body: JSON.stringify({
           school_name: schoolName,
           facilitator_name: facilitatorName,
           count,
         }),
       });
+
+      if (res.status === 401) {
+        setIsAuthorized(false);
+        setAuthError("Session expired or invalid key. Please log in again.");
+        return;
+      }
+
       const data = await res.json();
       if (data.codes) {
         setRecentGenerated(data.codes);
@@ -113,11 +158,46 @@ export default function AdminCodesPage() {
           Distribute these codes or links to schools; students entering them will automatically have their sessions linked via <code className="text-main font-mono">school_code</code>.
         </p>
 
-        {/* Generator Form */}
-        <form
-          onSubmit={handleGenerate}
-          className="rounded-lg border border-explore-border bg-surface-base p-lg flex flex-col gap-md"
-        >
+        {/* Authorization Form if not authenticated */}
+        {!isAuthorized ? (
+          <form
+            onSubmit={handleLogin}
+            className="rounded-lg border border-line bg-surface-base p-lg flex flex-col gap-md shadow-sm"
+          >
+            <h2 className="type-h2 text-main">Admin Authorization Required</h2>
+            <p className="type-body text-muted">
+              Enter your Admin Key to manage and generate facilitator codes.
+            </p>
+            {authError && (
+              <div className="rounded-md border border-red-300 bg-red-50 p-sm text-red-700 type-caption font-semibold">
+                {authError}
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-sm">
+              <input
+                type="password"
+                placeholder="Enter Admin API Key..."
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                className="type-body px-md py-sm rounded-lg border border-line bg-surface-base text-main flex-1"
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-brand-primary text-surface-base type-body font-bold px-lg py-sm rounded-lg hover:opacity-90 transition-opacity"
+              >
+                {loading ? "Verifying..." : "Authorize"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            {/* Generator Form */}
+            <form
+              onSubmit={handleGenerate}
+              className="rounded-lg border border-explore-border bg-surface-base p-lg flex flex-col gap-md"
+            >
           <h2 className="type-h2 text-main">Generate New Facilitator Code</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
@@ -226,7 +306,7 @@ export default function AdminCodesPage() {
             </h2>
             <button
               type="button"
-              onClick={fetchCodes}
+              onClick={() => fetchCodes()}
               className="type-caption text-muted hover:text-main"
             >
               ↻ Refresh
@@ -293,6 +373,8 @@ export default function AdminCodesPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </main>
   );

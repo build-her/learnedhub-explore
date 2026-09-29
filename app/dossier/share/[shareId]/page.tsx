@@ -8,11 +8,10 @@ import ShareExportBar from "@/components/ShareExportBar";
 import LearnerEntryFlow from "@/components/LearnerEntryFlow";
 import {
   getArtifactByShareId,
-  type Artifact,
+  type SharedDisplayArtifact,
   type PlanContent,
   type DefenseContent,
 } from "@/lib/artifacts";
-import { getLearnerById, type Learner } from "@/lib/learners";
 import { logEvent } from "@/lib/events";
 
 interface SharedArtifactPageProps {
@@ -23,8 +22,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
   const { shareId } = use(params);
   const searchParams = useSearchParams();
 
-  const [artifact, setArtifact] = useState<Artifact | null>(null);
-  const [owner, setOwner] = useState<Learner | null>(null);
+  const [artifact, setArtifact] = useState<SharedDisplayArtifact | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -42,8 +40,8 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
 
       try {
         setLoading(true);
-        // 1. Look up the specific artifact by share_id from the artifacts table (read-only)
-        // Do not check for or use any existing learner_id in the current session/localStorage
+        // Look up display fields only via /api/artifacts/share/[shareId]
+        // Strictly omits learner_id or sensitive identifiers
         const found = await getArtifactByShareId(shareId);
 
         if (!isMounted) return;
@@ -55,19 +53,6 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
         }
 
         setArtifact(found);
-
-        // 2. Fetch original owner profile for display purposes if available
-        if (found.learner_id) {
-          try {
-            const ownerProfile = await getLearnerById(found.learner_id);
-            if (isMounted && ownerProfile) {
-              setOwner(ownerProfile);
-            }
-          } catch (err) {
-            console.warn("Could not fetch owner profile:", err);
-          }
-        }
-
         setLoading(false);
       } catch (err) {
         console.error("Error loading shared artifact:", err);
@@ -151,10 +136,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
       `This result was generated from a short self-assessment quiz. It's a starting point for exploring ${title} — not a final decision.`
     : undefined;
 
-  const originalLearnerName =
-    owner?.preferred_name ||
-    (artifact.content as { learner_name?: string })?.learner_name ||
-    "Learner";
+  const originalLearnerName = artifact.first_name || artifact.learner_name || "Learner";
 
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl sm:py-2xl">
@@ -224,8 +206,6 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
         </div>
 
         {/* SECTION 2: Viewer Plain Identity Entry Screen */}
-        {/* Always shows the plain entry screen (name + optional access code, or LearnedHub Code) */}
-        {/* Even if this browser already has an active learner_id from a previous session */}
         <section className="flex flex-col gap-md pt-md border-t border-line">
           <div className="flex flex-col gap-xs text-center">
             <span className="type-caption font-bold uppercase tracking-wider text-muted text-xs">
@@ -246,7 +226,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
             pathwayKey={isPlan ? "discover" : "explore"}
             bgClass={isPlan ? "bg-discover" : "bg-explore"}
             onLearnerCreated={async (newLearner) => {
-              // Only after the viewer submits the entry screen is their own separate learner_id created and linked
+              // Log event without needing owner's learner_id
               await logEvent({
                 event_type: "artifact_opened_via_share",
                 learner_id: newLearner.id,
@@ -254,16 +234,13 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
                 screen: "dossier_share",
                 metadata_json: {
                   share_id: artifact.share_id,
-                  artifact_id: artifact.id,
                   artifact_type: artifact.type,
-                  artifact_owner_learner_id: artifact.learner_id,
                   shared_from_session: searchParams.get("session") || undefined,
                   is_new_viewer: true,
                 },
               });
             }}
             onLearnerResumed={async (resumedLearner) => {
-              // Existing learner resumed via LearnedHub Code
               await logEvent({
                 event_type: "artifact_opened_via_share",
                 learner_id: resumedLearner.id,
@@ -271,9 +248,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
                 screen: "dossier_share",
                 metadata_json: {
                   share_id: artifact.share_id,
-                  artifact_id: artifact.id,
                   artifact_type: artifact.type,
-                  artifact_owner_learner_id: artifact.learner_id,
                   shared_from_session: searchParams.get("session") || undefined,
                   is_new_viewer: false,
                 },

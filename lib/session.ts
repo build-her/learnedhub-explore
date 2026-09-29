@@ -1,9 +1,14 @@
-import { supabase } from "@/lib/supabase";
-
 export const SESSION_STORAGE_KEY = "learnedhub_session_token";
 export const SESSION_QUERY_PARAM = "session";
 
 let initPromise: Promise<string | null> | null = null;
+
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") return "";
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
 
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -14,6 +19,19 @@ function generateUUID(): string {
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+/**
+ * Actively clears the legacy client-writable learnedhub_learner_id cookie from browser storage.
+ */
+export function clearLegacyLearnerIdCookie(): void {
+  if (typeof document !== "undefined") {
+    try {
+      document.cookie = "learnedhub_learner_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0;";
+    } catch {
+      // Ignore cookie errors
+    }
+  }
 }
 
 /**
@@ -29,7 +47,7 @@ export function getSessionToken(): string | null {
 }
 
 /**
- * Returns existing session token or generates and persists a new one synchronously.
+ * Returns existing device session token or generates and persists a new one synchronously.
  */
 export function getOrCreateSessionToken(): string {
   if (typeof window === "undefined") return "";
@@ -39,13 +57,14 @@ export function getOrCreateSessionToken(): string {
       token = generateUUID();
       localStorage.setItem(SESSION_STORAGE_KEY, token);
 
-      // Asynchronously record new session in Supabase
-      supabase
-        .from("sessions")
-        .insert({ token })
-        .then(({ error }) => {
-          if (error) console.error("Error inserting session into Supabase:", error);
-        });
+      // Asynchronously record session via API route
+      fetch(`${getBaseUrl()}/api/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      }).catch((err) => {
+        console.error("Error creating session via API:", err);
+      });
     }
     return token;
   } catch (err) {
@@ -58,34 +77,30 @@ async function performInitSession(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
   try {
-    console.log("session init running")
+    clearLegacyLearnerIdCookie();
     const existingToken = localStorage.getItem(SESSION_STORAGE_KEY);
 
     if (!existingToken) {
-      // First page load: generate random session token, store in localStorage, insert row
       const token = generateUUID();
       localStorage.setItem(SESSION_STORAGE_KEY, token);
 
-      const { error } = await supabase.from("sessions").insert({ token });
-      if (error) {
-        console.error("Failed to insert new session in Supabase:", error);
-      }
+      await fetch(`${getBaseUrl()}/api/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
       return token;
     }
 
-    // Subsequent load: update last_seen_at on matching row
-    const { error, data } = await supabase
-      .from("sessions")
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq("token", existingToken)
-      .select("token");
-
-    if (error) {
-      console.error("Failed to update session last_seen_at in Supabase:", error);
-    } else if (!data || data.length === 0) {
-      // If the row doesn't exist in Supabase (e.g. wiped table), re-insert it
-      await supabase.from("sessions").insert({ token: existingToken });
-    }
+    await fetch(`${getBaseUrl()}/api/sessions`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token: existingToken,
+        last_seen_at: new Date().toISOString(),
+      }),
+    });
 
     return existingToken;
   } catch (err) {
@@ -95,9 +110,7 @@ async function performInitSession(): Promise<string | null> {
 }
 
 /**
- * Initializes the session:
- * - On first page load (no token in localStorage): creates token, stores in localStorage, inserts into Supabase sessions table.
- * - On subsequent loads: updates last_seen_at on the matching row in Supabase sessions table.
+ * Initializes the device session via /api/sessions.
  */
 export function initSession(): Promise<string | null> {
   if (typeof window === "undefined") return Promise.resolve(null);
@@ -109,7 +122,7 @@ export function initSession(): Promise<string | null> {
 
 /**
  * Clears current session token from localStorage, generates a new one,
- * inserts a fresh row in the Supabase sessions table, and returns the new token.
+ * records a fresh row in DB via API, and returns the new token.
  */
 export async function resetSession(): Promise<string> {
   if (typeof window === "undefined") return "";
@@ -118,12 +131,12 @@ export async function resetSession(): Promise<string> {
     const newToken = generateUUID();
     localStorage.setItem(SESSION_STORAGE_KEY, newToken);
 
-    const { error } = await supabase.from("sessions").insert({
-      token: newToken,
+    await fetch(`${getBaseUrl()}/api/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: newToken }),
     });
-    if (error) {
-      console.error("Failed to insert fresh session in Supabase:", error);
-    }
+
     return newToken;
   } catch (err) {
     console.error("Error resetting session:", err);
@@ -131,86 +144,25 @@ export async function resetSession(): Promise<string> {
   }
 }
 
-export const LEARNER_STORAGE_KEY = "learnedhub_learner_id";
-export const LEARNER_COOKIE_NAME = "learnedhub_learner_id";
-
 /**
- * Sets the authoritative learner_id cookie for both client and server (proxy middleware).
- */
-export function setLearnerCookie(learnerId: string) {
-  if (typeof document === "undefined") return;
-  try {
-    document.cookie = `${LEARNER_COOKIE_NAME}=${encodeURIComponent(learnerId)}; path=/; max-age=31536000; SameSite=Lax`;
-  } catch (err) {
-    console.error("Failed to set learner cookie:", err);
-  }
-}
-
-/**
- * Clears the learner_id cookie.
- */
-export function clearLearnerCookie() {
-  if (typeof document === "undefined") return;
-  try {
-    document.cookie = `${LEARNER_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
-  } catch (err) {
-    console.error("Failed to clear learner cookie:", err);
-  }
-}
-
-/**
- * Reads the learner_id from document.cookie if available.
- * Returns the trimmed learner_id, or null if missing/empty/invalid.
- * This is the authoritative read for learner identity.
- */
-export function getLearnerCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  try {
-    const match = document.cookie.match(/(?:^|;\s*)learnedhub_learner_id=([^;]+)/);
-    if (!match) return null;
-    const value = decodeURIComponent(match[1]).trim();
-    if (!value || value === "undefined" || value === "null") {
-      return null;
-    }
-    return value;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Clears the current session's learner_id link in cookies, non-authoritative localStorage cache, and Supabase,
- * allowing the current device/session to attach to a different or new learner.
+ * Clears the learner session via server-side /api/learners/logout route.
  */
 export async function clearSessionLearner(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
-    // 1. Authoritative clear: clear cookie
-    clearLearnerCookie();
-
-    // 2. Clear non-authoritative cache in localStorage
     try {
-      localStorage.removeItem(LEARNER_STORAGE_KEY);
+      clearLegacyLearnerIdCookie();
       localStorage.removeItem("learnedhub_learner_name");
       localStorage.removeItem("learnedhub_learner_code");
     } catch {
       // Ignore localStorage errors
     }
 
-    // 3. Clear learner_id in sessions table
-    const token = getSessionToken();
-    if (!token) return true;
+    const res = await fetch(`${getBaseUrl()}/api/learners/logout`, {
+      method: "POST",
+    });
 
-    const { error } = await supabase
-      .from("sessions")
-      .update({ learner_id: null })
-      .eq("token", token);
-
-    if (error) {
-      console.error("Failed to clear learner_id in Supabase:", error);
-      return false;
-    }
-    return true;
+    return res.ok;
   } catch (err) {
     console.error("Error clearing session learner:", err);
     return false;
@@ -218,82 +170,19 @@ export async function clearSessionLearner(): Promise<boolean> {
 }
 
 /**
- * Links a learner_id (UUID from learners table) to the current session.
- * The cookie is the authoritative single source of truth for learner identity.
- * localStorage is only updated as a non-authoritative cache (never read to set/override the cookie).
+ * Updates UI storage cache with learner display info.
  */
 export async function updateSessionLearner(
-  learnerId: string,
+  _learnerId?: string,
   meta?: { name?: string; code?: string }
 ): Promise<boolean> {
   if (typeof window === "undefined") return false;
   try {
-    // 1. Authoritative write: set cookie
-    setLearnerCookie(learnerId);
-
-    // 2. Non-authoritative local cache for fast UI access (never read to set or override the cookie)
-    try {
-      localStorage.setItem(LEARNER_STORAGE_KEY, learnerId);
-      if (meta?.name) {
-        localStorage.setItem("learnedhub_learner_name", meta.name);
-      }
-      if (meta?.code) {
-        localStorage.setItem("learnedhub_learner_code", meta.code);
-      }
-    } catch {
-      // Ignore localStorage errors
+    if (meta?.name) {
+      localStorage.setItem("learnedhub_learner_name", meta.name);
     }
-
-    // 3. Sync to Supabase sessions table
-    const token = getOrCreateSessionToken();
-    if (!token) return true;
-
-    const { error } = await supabase
-      .from("sessions")
-      .update({ learner_id: learnerId })
-      .eq("token", token);
-
-    if (error) {
-      console.error("Failed to update learner_id in Supabase:", error);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error("Failed to update session learner_id:", err);
-    return false;
-  }
-}
-
-/**
- * Retrieves the learner_id associated with the current session.
- * The cookie is the single source of truth.
- * All reads go through the cookie only. localStorage is never read to override or set the cookie.
- */
-export async function getSessionLearnerId(): Promise<string | null> {
-  return getLearnerCookie();
-}
-
-
-/**
- * Links a school_code to the current session in Supabase (if school_code column exists).
- */
-export async function updateSessionSchoolCode(schoolCode: string): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  try {
-    const token = getOrCreateSessionToken();
-    if (!token) return false;
-
-    const { error } = await supabase
-      .from("sessions")
-      .update({ school_code: schoolCode } as Record<string, unknown>)
-      .eq("token", token);
-
-    if (error) {
-      // If column school_code was dropped in migration, safely ignore
-      if (error.code !== "PGRST204" && !error.message?.includes("school_code")) {
-        console.error("Failed to update school_code in Supabase:", error);
-      }
-      return false;
+    if (meta?.code) {
+      localStorage.setItem("learnedhub_learner_code", meta.code);
     }
     return true;
   } catch {
@@ -302,7 +191,44 @@ export async function updateSessionSchoolCode(schoolCode: string): Promise<boole
 }
 
 /**
- * Retrieves the school_code associated with the current session (if school_code column exists).
+ * Checks if the current session has an authenticated learner by calling /api/me.
+ * Returns the learner_code string if active, or null if unauthenticated.
+ */
+export async function getSessionLearnerId(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch(`${getBaseUrl()}/api/me`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.learner_code || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Links a school_code to the current session via /api/sessions.
+ */
+export async function updateSessionSchoolCode(schoolCode: string): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const token = getOrCreateSessionToken();
+    if (!token) return false;
+
+    const res = await fetch(`${getBaseUrl()}/api/sessions`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, school_code: schoolCode }),
+    });
+
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Retrieves the school_code associated with the current session via /api/sessions.
  */
 export async function getSessionSchoolCode(): Promise<string | null> {
   if (typeof window === "undefined") return null;
@@ -310,14 +236,11 @@ export async function getSessionSchoolCode(): Promise<string | null> {
     const token = getSessionToken();
     if (!token) return null;
 
-    const { data, error } = await supabase
-      .from("sessions")
-      .select("school_code")
-      .eq("token", token)
-      .maybeSingle();
+    const res = await fetch(`${getBaseUrl()}/api/sessions?token=${encodeURIComponent(token)}`);
+    if (!res.ok) return null;
 
-    if (error) return null;
-    return (data as { school_code?: string | null })?.school_code || null;
+    const data = await res.json();
+    return data?.session?.school_code || null;
   } catch {
     return null;
   }
