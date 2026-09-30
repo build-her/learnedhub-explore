@@ -3,9 +3,30 @@ import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | LearnedHub",
+  title: "Terms of Service — LearnedHub Explore",
   description:
-    "LearnedHub terms of service in plain, student-readable English. Platform usage rules, guidance disclaimer, and admission outcome notices.",
+    "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+  openGraph: {
+    title: "Terms of Service — LearnedHub Explore",
+    description:
+      "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+    url: "/terms",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LearnedHub Explore Terms of Service",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Service — LearnedHub Explore",
+    description:
+      "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function TermsPage() {

@@ -3,9 +3,30 @@ import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | LearnedHub",
+  title: "Privacy Policy — LearnedHub Explore",
   description:
-    "LearnedHub privacy policy in plain, student-readable English. Learn how we protect your information, avoid account passwords, and handle data.",
+    "Read the LearnedHub Explore privacy policy explaining how student data is protected without requiring account passwords or personal identifiers.",
+  openGraph: {
+    title: "Privacy Policy — LearnedHub Explore",
+    description:
+      "Read the LearnedHub Explore privacy policy explaining how student data is protected without requiring account passwords or personal identifiers.",
+    url: "/privacy",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LearnedHub Explore Privacy Policy",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy — LearnedHub Explore",
+    description:
+      "Read the LearnedHub Explore privacy policy explaining how student data is protected without requiring account passwords or personal identifiers.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function PrivacyPage() {
