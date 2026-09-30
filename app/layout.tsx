@@ -14,7 +14,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://learnedhub-explore.
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "LearnedHub Explore — Discover Your Academic & Career Pathway",
+    default: "LearnedHub Explore — Discover Your Career Path",
     template: "%s — LearnedHub Explore",
   },
   description:
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/icon.svg" }],
   },
   openGraph: {
-    title: "LearnedHub Explore — Discover Your Academic & Career Pathway",
+    title: "LearnedHub Explore — Discover Your Career Path",
     description:
       "Interactive guidance platform helping secondary school students discover career streams, explore accredited university courses, and build verifiable portfolio dossiers.",
     url: siteUrl,
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "LearnedHub Explore — Discover Your Academic & Career Pathway",
+        alt: "LearnedHub Explore — Discover Your Career Path",
       },
     ],
     locale: "en_NG",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LearnedHub Explore — Discover Your Academic & Career Pathway",
+    title: "LearnedHub Explore — Discover Your Career Path",
     description:
       "Interactive guidance platform helping secondary school students discover career streams, explore accredited university courses, and build verifiable portfolio dossiers.",
     images: ["/og-image.png"],

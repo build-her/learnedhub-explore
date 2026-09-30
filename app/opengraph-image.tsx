@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "LearnedHub Explore — Discover Your Academic & Career Pathway";
+export const alt = "LearnedHub Explore — Discover Your Career Path";
 export const size = {
   width: 1200,
   height: 630,
@@ -78,7 +78,7 @@ export default function OpenGraphImage() {
               color: "#ffffff",
             }}
           >
-            Discover your academic and career pathway.
+            Discover your career path.
           </h1>
           <p
             style={{

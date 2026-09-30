@@ -5,11 +5,11 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "Terms of Service — LearnedHub Explore",
   description:
-    "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+    "Read the terms of service and usage conditions for the LearnedHub Explore career path and degree planning platform.",
   openGraph: {
     title: "Terms of Service — LearnedHub Explore",
     description:
-      "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+      "Read the terms of service and usage conditions for the LearnedHub Explore career path and degree planning platform.",
     url: "/terms",
     images: [
       {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Terms of Service — LearnedHub Explore",
     description:
-      "Read the terms of service and usage conditions for the LearnedHub Explore academic orientation and degree planning platform.",
+      "Read the terms of service and usage conditions for the LearnedHub Explore career path and degree planning platform.",
     images: ["/og-image.png"],
   },
 };
