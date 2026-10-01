@@ -38,7 +38,7 @@ export default function SiteFooter({ onOpenContact }: SiteFooterProps) {
             { label: "Schools", onAction: () => handleAction("School Inquiry") },
             { label: "Parents", onAction: () => handleAction("Unlock Full Access") },
             { label: "Partners", onAction: () => handleAction("Sponsorship") },
-            { label: "Contact", onAction: () => handleAction("School Inquiry") },
+            { label: "Contact", href: "mailto:info.learnedhub@gmail.com" },
             { label: "Privacy", href: "/privacy" },
             { label: "Terms", href: "/terms" },
           ].map((item) =>
@@ -66,8 +66,19 @@ export default function SiteFooter({ onOpenContact }: SiteFooterProps) {
             )
           )}
         </div>
-        <div className="type-caption text-surface-base/40">
-          © 2026 LearnedHub
+        <div className="pt-sm border-t border-surface-base/15 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-y-xs type-caption text-surface-base/70">
+          <div>
+            Contact:{" "}
+            <a
+              href="mailto:info.learnedhub@gmail.com"
+              className="text-surface-base font-semibold underline underline-offset-2 hover:opacity-85 transition-opacity"
+            >
+              info.learnedhub@gmail.com
+            </a>
+          </div>
+          <div className="text-surface-base/40">
+            © 2026 LearnedHub
+          </div>
         </div>
       </div>
 

@@ -262,7 +262,7 @@ export default function ContactModal({
               )}
 
               {/* Submit CTA */}
-              <div className="pt-xs">
+              <div className="pt-xs flex flex-col gap-xs">
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -272,6 +272,15 @@ export default function ContactModal({
                 >
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
+                <p className="text-center type-caption text-muted text-xs">
+                  Or email directly:{" "}
+                  <a
+                    href="mailto:info.learnedhub@gmail.com"
+                    className="font-medium text-brand-primary underline hover:opacity-80 transition-opacity"
+                  >
+                    info.learnedhub@gmail.com
+                  </a>
+                </p>
               </div>
             </form>
           )}
