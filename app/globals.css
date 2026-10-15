@@ -66,6 +66,9 @@
   .text-muted {
     color: var(--text-muted);
   }
+  .max-w-sm {
+    max-width: 24rem;
+  }
 }
 
 @layer components {
