@@ -74,24 +74,6 @@ export default function HomePageContent() {
 
   return (
     <div className="flex flex-col bg-surface-tint min-h-full">
-      <div className="flex items-center justify-between px-md py-sm bg-surface-tint border-b border-line sticky top-0 z-20">
-        <span className="type-h2 text-discover">LearnedHub</span>
-        <div className="flex items-center gap-sm">
-          <Link
-            href="/dossier/sample"
-            className="type-caption text-main font-semibold hover:text-discover"
-          >
-            Sample Dossier
-          </Link>
-          <Link
-            href="/discover"
-            className="type-caption bg-discover text-surface-base px-md py-xs rounded-full font-semibold"
-          >
-            Get started
-          </Link>
-        </div>
-      </div>
-
       <div className="bg-discover px-lg pt-xl pb-lg text-surface-base">
         <div className="type-caption uppercase tracking-widest text-surface-base/70 mb-md">
           For secondary students in Nigeria

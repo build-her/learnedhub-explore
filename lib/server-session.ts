@@ -114,7 +114,7 @@ export function setSessionCookie(res: NextResponse, token: string): void {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 31536000, // 1 year in seconds
+    maxAge: 604800, // 7 days in seconds (7 * 24 * 60 * 60)
   });
 
   // Actively clear any legacy client-writable cookie for existing visitors
