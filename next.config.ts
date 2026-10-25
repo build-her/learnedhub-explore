@@ -12,6 +12,30 @@ const nextConfig: NextConfig = {
     "*.app.github.dev",
     "*.github.dev",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/courses",
+        destination: "/build",
+        permanent: false,
+      },
+      {
+        source: "/learn",
+        destination: "/build",
+        permanent: false,
+      },
+      {
+        source: "/coming-soon",
+        destination: "/build",
+        permanent: false,
+      },
+      {
+        source: "/discover/quiz",
+        destination: "/discover",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

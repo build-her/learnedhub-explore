@@ -221,7 +221,7 @@ export default function SharedArtifactPage({ params }: SharedArtifactPageProps) 
 
           <LearnerEntryFlow
             ignoreActiveLearner={true}
-            destinationHref={isPlan ? "/discover/quiz" : "/explore/courses"}
+            destinationHref={isPlan ? "/discover" : "/explore/courses"}
             destinationLabel={isPlan ? "Start Discover Quiz" : "Explore Degree Programs"}
             pathwayKey={isPlan ? "discover" : "explore"}
             bgClass={isPlan ? "bg-discover" : "bg-explore"}
