@@ -25,10 +25,10 @@ export async function POST(req: Request) {
     const token = (await getSessionToken(req)) || bodyToken;
 
     if (token) {
-      // Clear learner_id in sessions table
+      // Delete session row in sessions table
       await supabaseServer
         .from("sessions")
-        .update({ learner_id: null })
+        .delete()
         .eq("token", token);
     }
 
@@ -41,12 +41,14 @@ export async function POST(req: Request) {
       // Ignore if cookieStore is unavailable
     }
 
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.redirect(new URL("/", req.url), 303);
     clearSessionCookie(response);
     return response;
   } catch (err) {
-    console.error("Error in /api/learners/logout:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Error in /api/learners/logout POST:", err);
+    const response = NextResponse.redirect(new URL("/", req.url), 303);
+    clearSessionCookie(response);
+    return response;
   }
 }
 
@@ -55,9 +57,10 @@ export async function GET(req: Request) {
     const token = await getSessionToken(req);
 
     if (token) {
+      // Delete session row in sessions table
       await supabaseServer
         .from("sessions")
-        .update({ learner_id: null })
+        .delete()
         .eq("token", token);
     }
 
@@ -69,12 +72,13 @@ export async function GET(req: Request) {
       // Ignore if cookieStore is unavailable
     }
 
-    const response = NextResponse.redirect(new URL("/entry", req.url));
+    const response = NextResponse.redirect(new URL("/", req.url), 302);
     clearSessionCookie(response);
     return response;
   } catch (err) {
     console.error("Error in GET /api/learners/logout:", err);
-    return NextResponse.redirect(new URL("/entry", req.url));
+    const response = NextResponse.redirect(new URL("/", req.url), 302);
+    clearSessionCookie(response);
+    return response;
   }
 }
-

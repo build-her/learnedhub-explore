@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   clearSessionLearner,
+  clearLegacyLearnerIdCookie,
   getSessionLearnerId,
   updateSessionLearner,
+  SESSION_STORAGE_KEY,
 } from "@/lib/session";
 import {
   createLearner,
@@ -55,6 +57,7 @@ export default function LearnerEntryFlow({
   // Post-creation confirmation screen state
   const [createdLearner, setCreatedLearner] = useState<Learner | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Active attached learner state (if already attached on this device)
   const [activeLearner, setActiveLearner] = useState<Learner | null>(null);
@@ -209,14 +212,16 @@ export default function LearnerEntryFlow({
         await onLearnerResumed(learner);
       }
 
-      // Navigate straight to the journey
-      router.push(destinationHref);
+      // Navigate straight to the journey with fresh headers
+      setIsNavigating(true);
+      window.location.href = destinationHref;
     } catch (err: unknown) {
       console.error("Error resuming with code:", err);
       const msg = (err as Error)?.message === "try again later."
         ? "try again later."
         : "Failed to lookup code. Please try again.";
       setResumeError(msg);
+      setIsNavigating(false);
     } finally {
       setIsResuming(false);
     }
@@ -234,27 +239,16 @@ export default function LearnerEntryFlow({
   }
 
   // Handler 4: "Not you? Start fresh"
-  async function handleStartFresh() {
+  function handleStartFresh() {
     try {
-      await clearSessionLearner();
-      setActiveLearner(null);
-      setCreatedLearner(null);
-      setPreferredName("");
-      setAccessCode("");
-      setExistingCode("");
-      setNewLearnerError(null);
-      setResumeError(null);
-
-      // Clean query params from URL
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("school");
-        url.searchParams.delete("name");
-        window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
-      }
-    } catch (err) {
-      console.error("Failed to start fresh:", err);
+      clearLegacyLearnerIdCookie();
+      localStorage.removeItem("learnedhub_learner_name");
+      localStorage.removeItem("learnedhub_learner_code");
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {
+      // Ignore
     }
+    window.location.href = "/api/learners/logout";
   }
 
   if (initialLoading) {
@@ -306,10 +300,14 @@ export default function LearnerEntryFlow({
 
         <button
           type="button"
-          onClick={() => router.push(destinationHref)}
-          className={`type-body font-bold text-surface-base rounded-md py-sm px-lg text-center ${bgClass} hover:opacity-90 transition-opacity`}
+          disabled={isNavigating}
+          onClick={() => {
+            setIsNavigating(true);
+            window.location.href = destinationHref;
+          }}
+          className={`type-body font-bold text-surface-base rounded-md py-sm px-lg text-center ${bgClass} hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer`}
         >
-          {destinationLabel} →
+          {isNavigating ? "Starting..." : `${destinationLabel} →`}
         </button>
 
         <div className="text-center">
@@ -364,10 +362,14 @@ export default function LearnerEntryFlow({
 
         <button
           type="button"
-          onClick={() => router.push(destinationHref)}
-          className={`type-body font-bold text-surface-base rounded-md py-sm px-lg text-center ${bgClass} hover:opacity-90 transition-opacity`}
+          disabled={isNavigating}
+          onClick={() => {
+            setIsNavigating(true);
+            window.location.href = destinationHref;
+          }}
+          className={`type-body font-bold text-surface-base rounded-md py-sm px-lg text-center ${bgClass} hover:opacity-90 disabled:opacity-50 transition-opacity cursor-pointer`}
         >
-          Continue my journey ({destinationLabel}) →
+          {isNavigating ? "Continuing..." : `Continue my journey (${destinationLabel}) →`}
         </button>
       </div>
     );

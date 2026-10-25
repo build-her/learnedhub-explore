@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getSessionToken, getLearnerFromSession } from "@/lib/server-session";
 
 export const metadata: Metadata = {
   title: "Discover Your Career Path — LearnedHub Explore",
@@ -27,10 +29,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DiscoverLayout({
+export default async function DiscoverLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const token = await getSessionToken();
+  const learner = await getLearnerFromSession(token);
+  if (!learner) {
+    redirect("/entry");
+  }
+
   return <>{children}</>;
 }

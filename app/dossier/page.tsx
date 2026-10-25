@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ShareExportBar from "@/components/ShareExportBar";
 import BrandedArtifactCard from "@/components/BrandedArtifactCard";
-import { getSessionLearnerId, clearSessionLearner } from "@/lib/session";
+import {
+  getSessionLearnerId,
+  clearLegacyLearnerIdCookie,
+  SESSION_STORAGE_KEY,
+} from "@/lib/session";
 import { getLearnerById, type Learner } from "@/lib/learners";
 import {
   getArtifactsByLearnerId,
@@ -103,16 +107,18 @@ export default function DossierPage() {
   const [filter, setFilter] = useState<"all" | "plan" | "defense">("all");
   const [loggingOut, setLoggingOut] = useState(false);
 
-  async function handleLogout() {
+  function handleLogout() {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      await clearSessionLearner();
-    } catch (err) {
-      console.error("Logout error:", err);
-    } finally {
-      window.location.href = "/entry";
+      clearLegacyLearnerIdCookie();
+      localStorage.removeItem("learnedhub_learner_name");
+      localStorage.removeItem("learnedhub_learner_code");
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {
+      // Ignore
     }
+    window.location.href = "/api/learners/logout";
   }
 
   useEffect(() => {
