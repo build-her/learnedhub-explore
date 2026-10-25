@@ -80,6 +80,14 @@ function ArtifactItem({
         />
 
         <div className="flex items-center gap-sm">
+          {artifact.share_id && (
+            <Link
+              href={`/dossier/share/${artifact.share_id}`}
+              className="type-caption text-main font-semibold hover:underline"
+            >
+              Open artifact →
+            </Link>
+          )}
           {isPlan ? (
             <Link
               href={`/discover/result?stream=${planData?.stream || "science"}`}
@@ -181,6 +189,12 @@ export default function DossierPage() {
     <LearnerShell>
       <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
         <div className="flex flex-col gap-xl max-w-[560px] w-full mx-auto">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 type-caption text-muted hover:text-main font-medium transition-colors"
+          >
+            ← Back to Home
+          </Link>
           {/* Dossier Header */}
           <div className="flex flex-col gap-xs rounded-xl bg-surface-base border border-line p-lg sm:p-xl shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-xs">

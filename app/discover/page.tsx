@@ -100,6 +100,15 @@ export default function DiscoverPage() {
 
   return (
     <main className="flex flex-1 flex-col bg-surface-tint min-h-screen">
+      <div className="w-full max-w-[560px] mx-auto px-lg pt-md">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 type-caption text-muted hover:text-main font-medium transition-colors"
+        >
+          ← Back to Home
+        </Link>
+      </div>
+
       {/* Prominent banner if learner has already completed at least one attempt */}
       {latestAttempt && (
         <section

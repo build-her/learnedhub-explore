@@ -129,6 +129,13 @@ function ExploreCoursesContent() {
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl min-h-screen">
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
+        <Link
+          href="/explore"
+          className="inline-flex items-center gap-1 type-caption text-muted hover:text-explore font-medium transition-colors"
+        >
+          ← Back to Explore
+        </Link>
+
         <div className="flex flex-col gap-xs">
           <span className="type-caption text-muted uppercase tracking-wider">
             Explore

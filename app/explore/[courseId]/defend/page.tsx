@@ -258,7 +258,7 @@ export default function DefendPage({
             The course you are trying to defend could not be found.
           </p>
           <Link href="/explore/courses" className="type-body text-explore hover:underline">
-            ← Back to Explore Courses
+            ← Back to search
           </Link>
         </div>
       </main>
@@ -274,7 +274,7 @@ export default function DefendPage({
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
         <div className="flex items-center justify-between">
           <Link href={`/explore/${course.id}`} className="type-caption text-muted hover:text-explore">
-            ← Back to {course.name}
+            ← Back to course profile
           </Link>
           <Link href="/dossier" className="type-caption text-explore font-semibold hover:underline">
             View Dossier →
@@ -314,7 +314,17 @@ export default function DefendPage({
                   : "bg-red-50 text-red-800 border border-red-200"
               }`}
             >
-              {feedback.message}
+              <div>{feedback.message}</div>
+              {feedback.type === "success" && (
+                <div className="mt-xs pt-xs border-t border-emerald-200">
+                  <Link
+                    href="/dossier"
+                    className="type-body font-bold text-explore hover:underline inline-flex items-center gap-1"
+                  >
+                    View in Dossier →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -368,7 +378,7 @@ export default function DefendPage({
 
           <div className="flex items-center justify-between pt-xs text-muted">
             <Link href="/explore/courses" className="type-caption hover:text-explore hover:underline">
-              ← Defend another course
+              Defend another course →
             </Link>
             <Link href="/dossier" className="type-caption text-explore font-semibold hover:underline">
               Go to your Dossier →

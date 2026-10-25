@@ -50,6 +50,13 @@ export default async function ExploreEntryPage({
   return (
     <main className="flex flex-1 flex-col items-center px-lg py-xxl bg-surface-tint min-h-screen">
       <div className="flex w-full max-w-[448px] flex-col gap-xl">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 type-caption text-muted hover:text-main font-medium transition-colors"
+        >
+          ← Back to Home
+        </Link>
+
         <div className="flex flex-col gap-sm">
           <span className="type-caption font-semibold px-sm py-0.5 rounded-full bg-explore-tint text-explore border border-explore-border w-fit">
             Explore Pathway
@@ -72,13 +79,19 @@ export default async function ExploreEntryPage({
         <div className="flex flex-col gap-md">
           <h2 className="type-h2 text-main">Today</h2>
 
-          <div className="flex items-start gap-sm rounded-md bg-surface-base p-md border-l-4 border-explore shadow-sm">
+          <div className="flex items-start justify-between gap-sm rounded-md bg-surface-base p-md border-l-4 border-explore shadow-sm">
             <div className="flex flex-col">
               <span className="type-body text-main">
                 <strong className="text-explore">Explore</strong> — Search real courses, filter by faculty, and see full admissions profiles
               </span>
               <span className="type-caption text-muted">~15 minutes</span>
             </div>
+            <Link
+              href="/explore/courses"
+              className="type-caption text-explore font-semibold hover:underline shrink-0 self-center"
+            >
+              Search courses →
+            </Link>
           </div>
 
           <h2 className="type-h2 text-main mt-sm">Also part of your LearnedHub journey</h2>

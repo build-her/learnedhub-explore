@@ -287,6 +287,20 @@ function ResultContent() {
     return (
       <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
         <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/discover"
+            className="inline-flex items-center gap-1 type-caption text-muted hover:text-discover font-medium transition-colors"
+          >
+            ← Back to Discover
+          </Link>
+          <Link
+            href="/dossier"
+            className="type-caption text-discover font-semibold hover:underline"
+          >
+            View in Dossier →
+          </Link>
+        </div>
           <div className="flex flex-col gap-xs">
             <span className="type-caption text-muted uppercase tracking-wider">
               Your result
@@ -302,6 +316,20 @@ function ResultContent() {
     return (
       <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
         <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/discover"
+            className="inline-flex items-center gap-1 type-caption text-muted hover:text-discover font-medium transition-colors"
+          >
+            ← Back to Discover
+          </Link>
+          <Link
+            href="/dossier"
+            className="type-caption text-discover font-semibold hover:underline"
+          >
+            View in Dossier →
+          </Link>
+        </div>
           <div className="flex flex-col gap-xs">
             <span className="type-caption text-muted uppercase tracking-wider">
               Your result
@@ -326,6 +354,20 @@ function ResultContent() {
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/discover"
+            className="inline-flex items-center gap-1 type-caption text-muted hover:text-discover font-medium transition-colors"
+          >
+            ← Back to Discover
+          </Link>
+          <Link
+            href="/dossier"
+            className="type-caption text-discover font-semibold hover:underline"
+          >
+            View in Dossier →
+          </Link>
+        </div>
         <div className="flex flex-col gap-xs">
           <div className="flex items-center justify-between">
             <span className="type-caption text-muted uppercase tracking-wider">

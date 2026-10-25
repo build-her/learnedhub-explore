@@ -111,9 +111,14 @@ export default async function CourseProfilePage({
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
-        <Link href="/explore/courses" className="type-caption text-muted hover:text-explore">
-          ← Back to search
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link href="/explore/courses" className="type-caption text-muted hover:text-explore">
+            ← Back to search
+          </Link>
+          <Link href="/dossier" className="type-caption text-explore font-semibold hover:underline">
+            View in Dossier →
+          </Link>
+        </div>
 
         <div className="flex flex-col gap-xs">
           <span className="type-caption text-muted uppercase tracking-wider">
@@ -220,12 +225,22 @@ export default async function CourseProfilePage({
             )}
           </>
         )}
-        <Link
-          href={`/explore/${course.id}/defend`}
-          className="block w-full text-center py-sm rounded-md type-body font-bold text-surface-base bg-explore"
-        >
-          Build your case for this course →
-        </Link>
+        <div className="flex flex-col gap-sm">
+          <Link
+            href={`/explore/${course.id}/defend`}
+            className="block w-full text-center py-sm rounded-md type-body font-bold text-surface-base bg-explore hover:opacity-90 transition-opacity"
+          >
+            Defend this course →
+          </Link>
+          <div className="text-center">
+            <Link
+              href="/dossier"
+              className="type-caption text-explore font-semibold hover:underline"
+            >
+              View in Dossier →
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );
