@@ -14,9 +14,25 @@ export default function LearnerHeader() {
   const pathname = usePathname();
   const [learner, setLearner] = useState<LearnerInfo | null>(null);
 
+  // Check if current route renders inside LearnerShell
+  const isShellRoute =
+    pathname === "/discover" ||
+    pathname?.startsWith("/discover/") ||
+    pathname === "/explore" ||
+    pathname?.startsWith("/explore/") ||
+    pathname === "/dossier" ||
+    pathname === "/build" ||
+    pathname?.startsWith("/build/") ||
+    pathname === "/shell-test" ||
+    pathname?.startsWith("/shell-test/");
+
   useEffect(() => {
-    // If admin or ops, do not query or display learner data
-    if (pathname?.startsWith("/admin") || pathname?.startsWith("/ops")) {
+    // If admin, ops, or shell route, do not query or display learner data
+    if (
+      pathname?.startsWith("/admin") ||
+      pathname?.startsWith("/ops") ||
+      isShellRoute
+    ) {
       return;
     }
 
@@ -62,10 +78,14 @@ export default function LearnerHeader() {
     return () => {
       isMounted = false;
     };
-  }, [pathname]);
+  }, [pathname, isShellRoute]);
 
-  // Strictly do not render on admin or ops routes
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/ops")) {
+  // Strictly do not render on admin, ops, or shell routes
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/ops") ||
+    isShellRoute
+  ) {
     return null;
   }
 
@@ -120,4 +140,3 @@ export default function LearnerHeader() {
     </header>
   );
 }
-

@@ -11,13 +11,21 @@ interface LearnerProfile {
 
 interface LearnerShellProps {
   children: React.ReactNode;
+  defaultCollapsed?: boolean;
 }
 
-export default function LearnerShell({ children }: LearnerShellProps) {
+export default function LearnerShell({
+  children,
+  defaultCollapsed,
+}: LearnerShellProps) {
   const pathname = usePathname();
 
-  // Desktop sidebar collapse state (persisted in localStorage)
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Desktop sidebar collapse state
+  // On /discover or /discover/quiz while questions are showing, default to collapsed
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    if (defaultCollapsed !== undefined) return defaultCollapsed;
+    return pathname === "/discover" || pathname === "/discover/quiz";
+  });
   // Mobile drawer open state
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -25,17 +33,36 @@ export default function LearnerShell({ children }: LearnerShellProps) {
   const [learner, setLearner] = useState<LearnerProfile | null>(null);
   const [loadingLearner, setLoadingLearner] = useState(true);
 
-  // 1. Restore collapsed preference from localStorage (safely in try/catch)
+  // 1. Manage sidebar collapse state across navigation:
+  // On /discover while questions are showing, start collapsed on desktop and closed on phone.
+  // On other pages, keep normal behavior (restore user preference from localStorage or default open).
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("learnedhub_sidebar_collapsed");
-      if (stored !== null) {
-        setIsCollapsed(stored === "true");
-      }
-    } catch {
-      // Storage unavailable or throws in private browsing; default to open (false)
+    const isQuizRoute =
+      pathname === "/discover" || pathname === "/discover/quiz";
+
+    if (defaultCollapsed !== undefined) {
+      setIsCollapsed(defaultCollapsed);
+      setIsMobileOpen(false);
+      return;
     }
-  }, []);
+
+    if (isQuizRoute) {
+      setIsCollapsed(true);
+      setIsMobileOpen(false);
+    } else {
+      try {
+        const stored = localStorage.getItem("learnedhub_sidebar_collapsed");
+        if (stored !== null) {
+          setIsCollapsed(stored === "true");
+        } else {
+          setIsCollapsed(false);
+        }
+      } catch {
+        setIsCollapsed(false);
+      }
+      setIsMobileOpen(false);
+    }
+  }, [pathname, defaultCollapsed]);
 
   // 2. Fetch learner session info from /api/me
   useEffect(() => {
@@ -98,10 +125,15 @@ export default function LearnerShell({ children }: LearnerShellProps) {
   const handleToggleCollapse = () => {
     setIsCollapsed((prev) => {
       const next = !prev;
-      try {
-        localStorage.setItem("learnedhub_sidebar_collapsed", String(next));
-      } catch {
-        // Ignore storage write errors
+      const isQuizRoute =
+        pathname === "/discover" || pathname === "/discover/quiz";
+      // Only persist to localStorage on normal pages so quiz collapse doesn't overwrite normal preference
+      if (!isQuizRoute && defaultCollapsed === undefined) {
+        try {
+          localStorage.setItem("learnedhub_sidebar_collapsed", String(next));
+        } catch {
+          // Ignore storage write errors
+        }
       }
       return next;
     });
@@ -653,9 +685,9 @@ export default function LearnerShell({ children }: LearnerShellProps) {
       {/* =================================================================== */}
       {/* 4. MAIN CONTENT AREA */}
       {/* =================================================================== */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

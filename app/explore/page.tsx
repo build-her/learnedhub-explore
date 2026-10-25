@@ -50,21 +50,6 @@ export default async function ExploreEntryPage({
   return (
     <main className="flex flex-1 flex-col items-center px-lg py-xxl bg-surface-tint min-h-screen">
       <div className="flex w-full max-w-[448px] flex-col gap-xl">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between pb-sm border-b border-line">
-          <Link href="/" className="type-caption text-muted hover:text-main">
-            ← Home
-          </Link>
-          <div className="flex items-center gap-md">
-            <Link href="/discover" className="type-caption text-discover hover:underline">
-              Discover
-            </Link>
-            <Link href="/dossier" className="type-caption text-main hover:underline">
-              Dossier
-            </Link>
-          </div>
-        </div>
-
         <div className="flex flex-col gap-sm">
           <span className="type-caption font-semibold px-sm py-0.5 rounded-full bg-explore-tint text-explore border border-explore-border w-fit">
             Explore Pathway

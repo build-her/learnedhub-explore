@@ -129,21 +129,6 @@ function ExploreCoursesContent() {
   return (
     <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl min-h-screen">
       <div className="flex flex-col gap-xl max-w-[480px] w-full mx-auto">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between pb-sm border-b border-line">
-          <Link href="/explore" className="type-caption text-muted hover:text-main">
-            ← Explore Overview
-          </Link>
-          <div className="flex items-center gap-md">
-            <Link href="/discover" className="type-caption text-discover hover:underline">
-              Discover
-            </Link>
-            <Link href="/dossier" className="type-caption text-main hover:underline">
-              Dossier
-            </Link>
-          </div>
-        </div>
-
         <div className="flex flex-col gap-xs">
           <span className="type-caption text-muted uppercase tracking-wider">
             Explore

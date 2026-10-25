@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionToken, getLearnerFromSession } from "@/lib/server-session";
+import LearnerShell from "@/components/LearnerShell";
 
 export const metadata: Metadata = {
   title: "Explore Degree Programs & Courses — LearnedHub Explore",
@@ -40,5 +41,5 @@ export default async function ExploreLayout({
     redirect("/entry");
   }
 
-  return <>{children}</>;
+  return <LearnerShell>{children}</LearnerShell>;
 }

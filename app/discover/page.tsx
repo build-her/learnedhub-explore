@@ -100,23 +100,6 @@ export default function DiscoverPage() {
 
   return (
     <main className="flex flex-1 flex-col bg-surface-tint min-h-screen">
-      {/* Top Header / Navigation Bar */}
-      <header className="w-full border-b border-line bg-surface-base">
-        <div className="max-w-[560px] mx-auto px-lg py-sm flex items-center justify-between">
-          <Link href="/" className="type-caption text-muted hover:text-main transition-colors">
-            ← Home
-          </Link>
-          <div className="flex items-center gap-md">
-            <Link href="/explore" className="type-caption text-explore hover:underline">
-              Explore
-            </Link>
-            <Link href="/dossier" className="type-caption text-muted hover:text-main transition-colors">
-              Dossier
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Prominent banner if learner has already completed at least one attempt */}
       {latestAttempt && (
         <section

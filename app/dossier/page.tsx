@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ShareExportBar from "@/components/ShareExportBar";
 import BrandedArtifactCard from "@/components/BrandedArtifactCard";
+import LearnerShell from "@/components/LearnerShell";
 import {
   getSessionLearnerId,
   clearLegacyLearnerIdCookie,
@@ -165,196 +166,172 @@ export default function DossierPage() {
   });
 
   return (
-    <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
-      <div className="flex flex-col gap-xl max-w-[560px] w-full mx-auto">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between">
-          <Link href="/" className="type-caption text-muted hover:text-main">
-            ← Home
-          </Link>
-          <div className="flex items-center gap-md">
-            <Link href="/discover" className="type-caption text-discover hover:underline">
-              Discover
-            </Link>
-            <Link href="/explore" className="type-caption text-explore hover:underline">
-              Explore
-            </Link>
-            <Link href="/build" className="type-caption text-build hover:underline">
-              Build
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={loggingOut}
-              className="type-caption text-muted hover:text-red-600 font-medium underline cursor-pointer disabled:opacity-50"
-            >
-              {loggingOut ? "Logging out..." : "Log out"}
-            </button>
-          </div>
-        </div>
+    <LearnerShell>
+      <main className="flex flex-1 flex-col bg-surface-tint px-lg py-xl">
+        <div className="flex flex-col gap-xl max-w-[560px] w-full mx-auto">
+          {/* Dossier Header */}
+          <div className="flex flex-col gap-xs rounded-xl bg-surface-base border border-line p-lg sm:p-xl shadow-sm">
+            <div className="flex items-center justify-between flex-wrap gap-xs">
+              <span className="type-caption font-bold text-xs uppercase tracking-wider text-muted">
+                LearnedHub Portfolio
+              </span>
+              <div className="flex items-center gap-xs">
+                {learner && (
+                  <span className="type-caption font-mono font-bold text-xs px-sm py-0.5 rounded bg-surface-tint border border-line text-main">
+                    {learner.learner_code}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="type-caption font-medium text-xs px-sm py-0.5 rounded border border-line bg-surface-base text-muted hover:text-red-600 hover:border-red-300 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Log out from this learner session"
+                >
+                  {loggingOut ? "Logging out..." : "Log out"}
+                </button>
+              </div>
+            </div>
 
-        {/* Dossier Header */}
-        <div className="flex flex-col gap-xs rounded-xl bg-surface-base border border-line p-lg sm:p-xl shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-xs">
-            <span className="type-caption font-bold text-xs uppercase tracking-wider text-muted">
-              LearnedHub Portfolio
-            </span>
-            <div className="flex items-center gap-xs">
-              {learner && (
-                <span className="type-caption font-mono font-bold text-xs px-sm py-0.5 rounded bg-surface-tint border border-line text-main">
-                  {learner.learner_code}
-                </span>
-              )}
+            <h1 className="type-display-lg text-main">
+              {learner?.preferred_name
+                ? `${learner.preferred_name}'s Dossier`
+                : "Your LearnedHub Dossier"}
+            </h1>
+
+            <p className="type-body text-muted">
+              Your personal portfolio of verified, timestamped educational artifacts and proofs of exploration.
+            </p>
+
+            <div className="flex flex-wrap gap-xs pt-sm border-t border-line mt-xs">
+              <span className="type-caption px-sm py-0.5 rounded-full bg-surface-tint border border-line font-medium text-main">
+                {artifacts.length} Total Artifact{artifacts.length === 1 ? "" : "s"}
+              </span>
+              <span className="type-caption px-sm py-0.5 rounded-full bg-discover-tint border border-discover-border text-discover font-medium">
+                {planCount} Field Action Plan{planCount === 1 ? "" : "s"}
+              </span>
+              <span className="type-caption px-sm py-0.5 rounded-full bg-explore-tint border border-explore-border text-explore font-medium">
+                {defenseCount} Field Defense{defenseCount === 1 ? "" : "s"}
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Controls (when artifacts exist) */}
+          {artifacts.length > 0 && (
+            <div className="flex gap-xs border-b border-line pb-xs">
               <button
                 type="button"
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="type-caption font-medium text-xs px-sm py-0.5 rounded border border-line bg-surface-base text-muted hover:text-red-600 hover:border-red-300 transition-colors cursor-pointer disabled:opacity-50"
-                title="Log out from this learner session"
+                onClick={() => setFilter("all")}
+                className={`type-caption px-md py-xs rounded-full border transition-colors ${
+                  filter === "all"
+                    ? "bg-main text-surface-base border-main font-semibold"
+                    : "bg-surface-base text-muted border-line hover:text-main"
+                }`}
               >
-                {loggingOut ? "Logging out..." : "Log out"}
+                All ({artifacts.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("plan")}
+                className={`type-caption px-md py-xs rounded-full border transition-colors ${
+                  filter === "plan"
+                    ? "bg-discover text-surface-base border-discover font-semibold"
+                    : "bg-surface-base text-muted border-line hover:text-discover"
+                }`}
+              >
+                Field Action Plans ({planCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("defense")}
+                className={`type-caption px-md py-xs rounded-full border transition-colors ${
+                  filter === "defense"
+                    ? "bg-explore text-surface-base border-explore font-semibold"
+                    : "bg-surface-base text-muted border-line hover:text-explore"
+                }`}
+              >
+                Field Defenses ({defenseCount})
               </button>
             </div>
-          </div>
+          )}
 
-          <h1 className="type-display-lg text-main">
-            {learner?.preferred_name
-              ? `${learner.preferred_name}'s Dossier`
-              : "Your LearnedHub Dossier"}
-          </h1>
+          {/* Content Body */}
+          {loading ? (
+            <div className="rounded-xl bg-surface-base border border-line p-xl text-center">
+              <p className="type-body text-muted">Loading your Dossier artifacts...</p>
+            </div>
+          ) : filteredArtifacts.length > 0 ? (
+            <div className="flex flex-col gap-lg">
+              {filteredArtifacts.map((artifact) => (
+                <ArtifactItem
+                  key={artifact.id}
+                  artifact={artifact}
+                  learnerName={learner?.preferred_name}
+                />
+              ))}
 
-          <p className="type-body text-muted">
-            Your personal portfolio of verified, timestamped educational artifacts and proofs of exploration.
-          </p>
-
-          <div className="flex flex-wrap gap-xs pt-sm border-t border-line mt-xs">
-            <span className="type-caption px-sm py-0.5 rounded-full bg-surface-tint border border-line font-medium text-main">
-              {artifacts.length} Total Artifact{artifacts.length === 1 ? "" : "s"}
-            </span>
-            <span className="type-caption px-sm py-0.5 rounded-full bg-discover-tint border border-discover-border text-discover font-medium">
-              {planCount} Field Action Plan{planCount === 1 ? "" : "s"}
-            </span>
-            <span className="type-caption px-sm py-0.5 rounded-full bg-explore-tint border border-explore-border text-explore font-medium">
-              {defenseCount} Field Defense{defenseCount === 1 ? "" : "s"}
-            </span>
-          </div>
-        </div>
-
-        {/* Filter Controls (when artifacts exist) */}
-        {artifacts.length > 0 && (
-          <div className="flex gap-xs border-b border-line pb-xs">
-            <button
-              type="button"
-              onClick={() => setFilter("all")}
-              className={`type-caption px-md py-xs rounded-full border transition-colors ${
-                filter === "all"
-                  ? "bg-main text-surface-base border-main font-semibold"
-                  : "bg-surface-base text-muted border-line hover:text-main"
-              }`}
-            >
-              All ({artifacts.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter("plan")}
-              className={`type-caption px-md py-xs rounded-full border transition-colors ${
-                filter === "plan"
-                  ? "bg-discover text-surface-base border-discover font-semibold"
-                  : "bg-surface-base text-muted border-line hover:text-discover"
-              }`}
-            >
-              Field Action Plans ({planCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter("defense")}
-              className={`type-caption px-md py-xs rounded-full border transition-colors ${
-                filter === "defense"
-                  ? "bg-explore text-surface-base border-explore font-semibold"
-                  : "bg-surface-base text-muted border-line hover:text-explore"
-              }`}
-            >
-              Field Defenses ({defenseCount})
-            </button>
-          </div>
-        )}
-
-        {/* Content Body */}
-        {loading ? (
-          <div className="rounded-xl bg-surface-base border border-line p-xl text-center">
-            <p className="type-body text-muted">Loading your Dossier artifacts...</p>
-          </div>
-        ) : filteredArtifacts.length > 0 ? (
-          <div className="flex flex-col gap-lg">
-            {filteredArtifacts.map((artifact) => (
-              <ArtifactItem
-                key={artifact.id}
-                artifact={artifact}
-                learnerName={learner?.preferred_name}
-              />
-            ))}
-
-            {/* Dossier Continue Link Callout */}
-            <div className="rounded-xl bg-surface-base border border-build-border p-md sm:p-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md mt-sm shadow-sm">
-              <div className="flex flex-col gap-0.5">
-                <span className="type-caption font-bold text-xs uppercase tracking-wider text-build">
-                  Next Step: Build
-                </span>
-                <p className="type-body font-semibold text-main">
-                  Ready to test your skills?
-                </p>
-                <p className="type-caption text-muted">
-                  Try a real skill challenge and add verified skills records to your portfolio.
+              {/* Dossier Continue Link Callout */}
+              <div className="rounded-xl bg-surface-base border border-build-border p-md sm:p-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md mt-sm shadow-sm">
+                <div className="flex flex-col gap-0.5">
+                  <span className="type-caption font-bold text-xs uppercase tracking-wider text-build">
+                    Next Step: Build
+                  </span>
+                  <p className="type-body font-semibold text-main">
+                    Ready to test your skills?
+                  </p>
+                  <p className="type-caption text-muted">
+                    Try a real skill challenge and add verified skills records to your portfolio.
+                  </p>
+                </div>
+                <Link
+                  href="/build"
+                  className="type-body font-bold text-surface-base bg-build rounded-md py-sm px-lg text-center hover:opacity-90 transition-opacity shrink-0"
+                >
+                  Continue to Build →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            /* Empty State */
+            <div className="rounded-xl bg-surface-base border border-dashed border-[var(--text-muted)] p-xl flex flex-col items-center text-center gap-md">
+              <div className="w-12 h-12 rounded-full bg-surface-tint border border-line flex items-center justify-center text-xl">
+                📂
+              </div>
+              <div className="flex flex-col gap-xs max-w-[380px]">
+                <h2 className="type-h2 text-main">
+                  {filter === "all"
+                    ? "No artifacts in your Dossier yet"
+                    : `No ${filter === "plan" ? "Field Action Plans" : "Field Defenses"} found`}
+                </h2>
+                <p className="type-body text-muted text-sm">
+                  Your Dossier stores your verified Field Action Plans and Field Defense Summaries as you explore.
                 </p>
               </div>
-              <Link
-                href="/build"
-                className="type-body font-bold text-surface-base bg-build rounded-md py-sm px-lg text-center hover:opacity-90 transition-opacity shrink-0"
-              >
-                Continue to Build →
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* Empty State */
-          <div className="rounded-xl bg-surface-base border border-dashed border-[var(--text-muted)] p-xl flex flex-col items-center text-center gap-md">
-            <div className="w-12 h-12 rounded-full bg-surface-tint border border-line flex items-center justify-center text-xl">
-              📂
-            </div>
-            <div className="flex flex-col gap-xs max-w-[380px]">
-              <h2 className="type-h2 text-main">
-                {filter === "all"
-                  ? "No artifacts in your Dossier yet"
-                  : `No ${filter === "plan" ? "Field Action Plans" : "Field Defenses"} found`}
-              </h2>
-              <p className="type-body text-muted text-sm">
-                Your Dossier stores your verified Field Action Plans and Field Defense Summaries as you explore.
-              </p>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-xs w-full max-w-[480px] pt-sm">
-              <Link
-                href="/discover"
-                className="flex-1 py-sm px-md rounded-md bg-discover text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
-              >
-                Start Discover →
-              </Link>
-              <Link
-                href="/explore"
-                className="flex-1 py-sm px-md rounded-md bg-explore text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
-              >
-                Explore Courses →
-              </Link>
-              <Link
-                href="/build"
-                className="flex-1 py-sm px-md rounded-md bg-build text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
-              >
-                Start Build →
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-xs w-full max-w-[480px] pt-sm">
+                <Link
+                  href="/discover"
+                  className="flex-1 py-sm px-md rounded-md bg-discover text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
+                >
+                  Start Discover →
+                </Link>
+                <Link
+                  href="/explore"
+                  className="flex-1 py-sm px-md rounded-md bg-explore text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
+                >
+                  Explore Courses →
+                </Link>
+                <Link
+                  href="/build"
+                  className="flex-1 py-sm px-md rounded-md bg-build text-surface-base font-bold type-caption text-center hover:opacity-90 transition-opacity"
+                >
+                  Start Build →
+                </Link>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-    </main>
+          )}
+        </div>
+      </main>
+    </LearnerShell>
   );
 }

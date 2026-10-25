@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionToken, getLearnerFromSession } from "@/lib/server-session";
+import LearnerShell from "@/components/LearnerShell";
 
 export const metadata: Metadata = {
   title: "Discover Your Career Path — LearnedHub Explore",
@@ -40,5 +41,5 @@ export default async function DiscoverLayout({
     redirect("/entry");
   }
 
-  return <>{children}</>;
+  return <LearnerShell>{children}</LearnerShell>;
 }
