@@ -7,7 +7,8 @@ export type EventType =
   | "pathway_completed"
   | "artifact_generated"
   | "artifact_shared"
-  | "artifact_opened_via_share";
+  | "artifact_opened_via_share"
+  | "sidebar_toggled";
 
 export type PathwayName = "discover" | "explore" | "build";
 

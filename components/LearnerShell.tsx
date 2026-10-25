@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clearLegacyLearnerIdCookie, SESSION_STORAGE_KEY } from "@/lib/session";
+import { logEvent, resolveScreenAndPathway } from "@/lib/events";
 
 interface LearnerProfile {
   name: string | null;
@@ -99,16 +100,48 @@ export default function LearnerShell({
     };
   }, []);
 
-  // 3. Close mobile drawer on Escape key or route change
+  // Log sidebar toggle event (open or collapsed, phone or desktop)
+  // Does not log automatic starting state
+  const logSidebarToggle = (state: "open" | "collapsed", device: "phone" | "desktop") => {
+    try {
+      const { screen, pathway } = resolveScreenAndPathway(pathname);
+      logEvent({
+        event_type: "sidebar_toggled",
+        screen,
+        pathway,
+        metadata_json: {
+          state,
+          device,
+        },
+      });
+    } catch (err) {
+      console.error("Error logging sidebar_toggled event:", err);
+    }
+  };
+
+  const handleOpenMobile = () => {
+    setIsMobileOpen(true);
+    logSidebarToggle("open", "phone");
+  };
+
+  const handleCloseMobile = () => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+      logSidebarToggle("collapsed", "phone");
+    }
+  };
+
+  // 3. Close mobile drawer on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isMobileOpen) {
         setIsMobileOpen(false);
+        logSidebarToggle("collapsed", "phone");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMobileOpen]);
+  }, [isMobileOpen, pathname]);
 
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
@@ -162,6 +195,7 @@ export default function LearnerShell({
           // Ignore storage write errors
         }
       }
+      logSidebarToggle(next ? "collapsed" : "open", "desktop");
       return next;
     });
   };
@@ -297,7 +331,7 @@ export default function LearnerShell({
           {/* Menu button with large 44x44 tap target */}
           <button
             type="button"
-            onClick={() => setIsMobileOpen(true)}
+            onClick={handleOpenMobile}
             className="w-11 h-11 flex items-center justify-center rounded-lg border border-line text-main hover:bg-surface-tint active:bg-line/40 transition-colors cursor-pointer"
             aria-label="Open navigation menu"
             aria-expanded={isMobileOpen}
@@ -350,7 +384,7 @@ export default function LearnerShell({
           {/* Backdrop - tap outside to close */}
           <div
             className="fixed inset-0 bg-black/50 transition-opacity"
-            onClick={() => setIsMobileOpen(false)}
+            onClick={handleCloseMobile}
             aria-hidden="true"
           />
 
@@ -363,7 +397,7 @@ export default function LearnerShell({
             <div className="flex items-center justify-between px-4 py-3 border-b border-line">
               <Link
                 href="/"
-                onClick={() => setIsMobileOpen(false)}
+                onClick={handleCloseMobile}
                 className="type-h2 text-discover font-bold tracking-tight"
               >
                 LearnedHub
@@ -372,7 +406,7 @@ export default function LearnerShell({
               {/* Close Button with large 44x44 tap target */}
               <button
                 type="button"
-                onClick={() => setIsMobileOpen(false)}
+                onClick={handleCloseMobile}
                 className="w-11 h-11 flex items-center justify-center rounded-lg border border-line text-muted hover:text-main hover:bg-surface-tint active:bg-line/40 transition-colors cursor-pointer"
                 aria-label="Close navigation menu"
               >
@@ -419,7 +453,7 @@ export default function LearnerShell({
                   <Link
                     key={item.id}
                     href={item.href}
-                    onClick={() => setIsMobileOpen(false)}
+                    onClick={handleCloseMobile}
                     className={`min-h-[52px] px-3.5 py-3 rounded-lg flex items-center gap-3 transition-colors ${
                       active
                         ? "bg-discover-tint text-discover font-semibold border-l-4 border-discover shadow-xs"
@@ -469,7 +503,7 @@ export default function LearnerShell({
               ) : (
                 <Link
                   href="/entry"
-                  onClick={() => setIsMobileOpen(false)}
+                  onClick={handleCloseMobile}
                   className="min-h-[48px] w-full flex items-center justify-center rounded-lg bg-discover text-surface-base type-body font-semibold hover:opacity-90 transition-opacity text-center shadow-xs"
                 >
                   Get started →
