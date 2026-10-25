@@ -10,6 +10,16 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function applyNoCacheHeaders(response: NextResponse): NextResponse {
+  response.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
 export async function POST(req: Request) {
   try {
     let bodyToken: string | null = null;
@@ -43,12 +53,12 @@ export async function POST(req: Request) {
 
     const response = NextResponse.redirect(new URL("/", req.url), 303);
     clearSessionCookie(response);
-    return response;
+    return applyNoCacheHeaders(response);
   } catch (err) {
     console.error("Error in /api/learners/logout POST:", err);
     const response = NextResponse.redirect(new URL("/", req.url), 303);
     clearSessionCookie(response);
-    return response;
+    return applyNoCacheHeaders(response);
   }
 }
 
@@ -74,11 +84,11 @@ export async function GET(req: Request) {
 
     const response = NextResponse.redirect(new URL("/", req.url), 302);
     clearSessionCookie(response);
-    return response;
+    return applyNoCacheHeaders(response);
   } catch (err) {
     console.error("Error in GET /api/learners/logout:", err);
     const response = NextResponse.redirect(new URL("/", req.url), 302);
     clearSessionCookie(response);
-    return response;
+    return applyNoCacheHeaders(response);
   }
 }

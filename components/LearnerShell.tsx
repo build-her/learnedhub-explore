@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { clearLegacyLearnerIdCookie, SESSION_STORAGE_KEY } from "@/lib/session";
 
 interface LearnerProfile {
   name: string | null;
@@ -120,6 +121,32 @@ export default function LearnerShell({
       document.body.style.overflow = "";
     };
   }, [isMobileOpen]);
+
+  // Handle logout: clear client session storage and redirect to server logout endpoint
+  // Using replace navigation ensures the learner page is replaced in browser history
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    try {
+      clearLegacyLearnerIdCookie();
+      localStorage.removeItem("learnedhub_learner_name");
+      localStorage.removeItem("learnedhub_learner_code");
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors
+    }
+    window.location.replace("/api/learners/logout");
+  };
+
+  // Reload page if restored from browser BFCache to prevent showing old learner session
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   // Toggle desktop collapsed state and persist to localStorage
   const handleToggleCollapse = () => {
@@ -430,13 +457,10 @@ export default function LearnerShell({
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" title="Active session" />
                   </div>
 
-                  {/* Log out button (does nothing yet as specified) */}
+                  {/* Log out button */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      /* Does nothing yet */
-                    }}
+                    onClick={handleLogout}
                     className="min-h-[44px] w-full flex items-center justify-center rounded-lg border border-line bg-surface-base text-xs font-semibold text-muted hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer"
                   >
                     Log out
@@ -612,13 +636,10 @@ export default function LearnerShell({
                     )}
                   </div>
 
-                  {/* Log out button (does nothing yet as specified) */}
+                  {/* Log out button */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      /* Does nothing yet */
-                    }}
+                    onClick={handleLogout}
                     className="w-full text-left px-2 py-1.5 text-xs text-muted hover:text-red-600 transition-colors font-medium cursor-pointer rounded hover:bg-surface-base border border-transparent hover:border-line"
                   >
                     Log out
@@ -634,12 +655,9 @@ export default function LearnerShell({
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      /* Does nothing yet */
-                    }}
+                    onClick={handleLogout}
                     className="text-[10px] text-muted hover:text-red-600 transition-colors cursor-pointer"
-                    title="Log out (does nothing yet)"
+                    title="Log out"
                   >
                     Out
                   </button>

@@ -63,6 +63,17 @@ export default function LearnerEntryFlow({
   const [activeLearner, setActiveLearner] = useState<Learner | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Reload page if restored from browser BFCache to prevent showing old learner session
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   // Check if session is already attached to a learner on mount
   useEffect(() => {
     if (ignoreActiveLearner) {
@@ -238,8 +249,8 @@ export default function LearnerEntryFlow({
     }
   }
 
-  // Handler 4: "Not you? Start fresh"
-  function handleStartFresh() {
+  // Handler 4: Log out
+  function handleLogout() {
     try {
       clearLegacyLearnerIdCookie();
       localStorage.removeItem("learnedhub_learner_name");
@@ -248,7 +259,7 @@ export default function LearnerEntryFlow({
     } catch {
       // Ignore
     }
-    window.location.href = "/api/learners/logout";
+    window.location.replace("/api/learners/logout");
   }
 
   if (initialLoading) {
@@ -262,7 +273,6 @@ export default function LearnerEntryFlow({
   // =========================================================================
   // VIEW 1: Confirmation Screen (After New Learner is Created)
   // Shows 4-digit code (format LH-XXXX), Copy code action, and save warning.
-  // No name/school banner shown instead of the code.
   // =========================================================================
   if (createdLearner) {
     return (
@@ -309,23 +319,13 @@ export default function LearnerEntryFlow({
         >
           {isNavigating ? "Starting..." : `${destinationLabel} →`}
         </button>
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={handleStartFresh}
-            className="type-caption text-muted hover:text-explore hover:underline"
-          >
-            Not you? Start fresh
-          </button>
-        </div>
       </div>
     );
   }
 
   // =========================================================================
-  // VIEW 2: Active Learner Attached to Session
-  // If this device was already linked to a learner, show their code and options.
+  // VIEW 2: Active Learner Attached to Session (Explore overview card)
+  // If this device was already linked to a learner, show their code and Log out.
   // =========================================================================
   if (activeLearner) {
     return (
@@ -335,15 +335,7 @@ export default function LearnerEntryFlow({
           <div className="flex items-center gap-sm">
             <button
               type="button"
-              onClick={handleStartFresh}
-              className="type-caption text-explore hover:underline cursor-pointer"
-            >
-              Not you? Start fresh
-            </button>
-            <span className="text-muted text-xs">·</span>
-            <button
-              type="button"
-              onClick={handleStartFresh}
+              onClick={handleLogout}
               className="type-caption font-medium text-muted hover:text-red-600 underline cursor-pointer"
             >
               Log out

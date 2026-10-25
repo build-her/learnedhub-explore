@@ -26,6 +26,17 @@ export default function LearnerHeader() {
     pathname === "/shell-test" ||
     pathname?.startsWith("/shell-test/");
 
+  // Reload page if restored from browser BFCache to prevent showing old learner session
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   useEffect(() => {
     // If admin, ops, or shell route, do not query or display learner data
     if (
@@ -89,7 +100,8 @@ export default function LearnerHeader() {
     return null;
   }
 
-  const handleStartFresh = () => {
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     try {
       clearLegacyLearnerIdCookie();
       localStorage.removeItem("learnedhub_learner_name");
@@ -98,6 +110,7 @@ export default function LearnerHeader() {
     } catch {
       // Ignore
     }
+    window.location.replace("/api/learners/logout");
   };
 
   return (
@@ -126,15 +139,17 @@ export default function LearnerHeader() {
             Sample Dossier
           </Link>
 
-          {/* Visible 'Not you? Start fresh' control calling the logout server route */}
-          <a
-            href="/api/learners/logout"
-            onClick={handleStartFresh}
-            className="type-caption px-sm py-1 rounded border border-line text-muted hover:text-discover hover:border-discover transition-colors font-medium whitespace-nowrap cursor-pointer"
-            title="Clear session, delete database row, and start fresh"
-          >
-            Not you? Start fresh
-          </a>
+          {/* Visible Log out control calling the logout server route */}
+          {learner?.name && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="type-caption px-sm py-1 rounded border border-line text-muted hover:text-red-600 hover:border-red-300 transition-colors font-medium whitespace-nowrap cursor-pointer"
+              title="Log out"
+            >
+              Log out
+            </button>
+          )}
         </div>
       </div>
     </header>

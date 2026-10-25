@@ -119,8 +119,20 @@ export default function DossierPage() {
     } catch {
       // Ignore
     }
-    window.location.href = "/api/learners/logout";
+    window.location.replace("/api/learners/logout");
   }
+
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;

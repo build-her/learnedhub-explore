@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   clearSessionLearner,
+  clearLegacyLearnerIdCookie,
   getSessionLearnerId,
   updateSessionLearner,
   updateSessionSchoolCode,
   getSessionSchoolCode,
+  SESSION_STORAGE_KEY,
 } from "@/lib/session";
 import { getLearnerById, getLearnerByCode, createLearner } from "@/lib/learners";
 import { lookupAccessCode } from "@/lib/access-codes";
@@ -164,42 +166,22 @@ export default function SchoolCodeEntry({
   }
 
   /**
-   * "Not you? Start fresh"
-   * Clears the current session's learner_id link in Supabase and localStorage,
-   * resets local state, strips lingering URL parameters, and re-triggers the
-   * manual code entry screen from Prompt 1 so the device can attach to a different or new learner.
+   * Log out action:
+   * Clears learner session in Supabase, cookies, and localStorage, then navigates to server logout route.
    */
-  async function handleStartFresh() {
+  async function handleLogout() {
     setLoading(true);
     setFeedback(null);
     try {
-      // 1. Clear session's learner_id link (keeps device session active, unlinks learner)
+      clearLegacyLearnerIdCookie();
+      localStorage.removeItem("learnedhub_learner_name");
+      localStorage.removeItem("learnedhub_learner_code");
+      localStorage.removeItem(SESSION_STORAGE_KEY);
       await clearSessionLearner();
-
-      // 2. Reset component state to initial entry screen
-      setActiveCode(null);
-      setSchoolName(null);
-      setLearnerName(null);
-      setInputCode("");
-      setIsEditing(false);
-
-      // 3. Clear any lingering URL search parameters (?school=... / ?name=...)
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("school");
-        url.searchParams.delete("name");
-        window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
-      }
-
-      setFeedback({
-        type: "info",
-        message: "Learner unlinked. Enter a code below to attach a new or different learner.",
-      });
+      window.location.replace("/api/learners/logout");
     } catch (err) {
-      console.error("Failed to clear learner link:", err);
-      setFeedback({ type: "error", message: "Failed to reset learner. Please try again." });
-    } finally {
-      setLoading(false);
+      console.error("Failed to log out:", err);
+      window.location.replace("/api/learners/logout");
     }
   }
 
@@ -217,16 +199,7 @@ export default function SchoolCodeEntry({
             <div className="flex items-center gap-sm">
               <button
                 type="button"
-                onClick={handleStartFresh}
-                disabled={loading}
-                className="type-caption text-explore hover:underline disabled:opacity-50 cursor-pointer"
-              >
-                Not you? Start fresh
-              </button>
-              <span className="text-muted text-xs">·</span>
-              <button
-                type="button"
-                onClick={handleStartFresh}
+                onClick={handleLogout}
                 disabled={loading}
                 className="type-caption font-medium text-muted hover:text-red-600 underline disabled:opacity-50 cursor-pointer"
               >
@@ -255,14 +228,6 @@ export default function SchoolCodeEntry({
             <span className="type-caption text-main font-semibold">
               Have a school code?
             </span>
-            <button
-              type="button"
-              onClick={handleStartFresh}
-              disabled={loading}
-              className="type-caption text-explore hover:underline disabled:opacity-50"
-            >
-              Not you? Start fresh
-            </button>
           </div>
 
           <form onSubmit={handleApplyCode} className="flex gap-xs">
